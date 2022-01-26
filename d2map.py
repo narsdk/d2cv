@@ -19,6 +19,7 @@ rng.seed(12345)
 user32 = ctypes.windll.user32
 screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
 
+# DIRECTIONER
 move_directions = {
     "t" : (1300, 10),
     "d" : (1300, 1100),
@@ -26,10 +27,41 @@ move_directions = {
     "l" : (10, 700),
     "tl" : (10, 10),
     "tr" : (2550, 10),
-    "dl" : (10, 1100),
-    "dr" : (2550, 1100)
+    "dl" : (10, 1400),
+    "dr" : (2550, 1400)
 }
 
+# old directions
+# move_directions = {
+#     "t" : (1300, 10),
+#     "d" : (1300, 1100),
+#     "r" : (2550, 700),
+#     "l" : (10, 700),
+#     "tl" : (10, 10),
+#     "tr" : (2550, 10),
+#     "dl" : (10, 1100),
+#     "dr" : (2550, 1100)
+# }
+
+direction_numbers = ["tl","tr","dr","dl"]
+
+# DIRECTIONER
+def direction_resolver(direction,resolution):
+    resolution_x, resolution_y = resolution
+    move_directions = {
+        "t" : (int(resolution_x / 2), 0),
+        "d" : (int(resolution_x / 2), resolution_y),
+        "r" : (resolution_x, int(resolution_y / 2)),
+        "l" : (0, int(resolution_y / 2)),
+        "tl" : (0, 0),
+        "tr" : (resolution_x, 0),
+        "dl" : (0, resolution_y),
+        "dr" : (resolution_x, resolution_y),
+        "c" : (int(resolution_x / 2),int(resolution_y / 2))
+    }
+    return move_directions[direction]
+
+### ABADONED
 def get_contours(gray_image,val):
     threshold = val
     # Detect edges using Canny
@@ -40,15 +72,15 @@ def get_contours(gray_image,val):
     drawing = np.zeros((canny_output.shape[0], canny_output.shape[1], 3), dtype=np.uint8)
     for i in range(len(contours)):
         #color = (rng.randint(0,256), rng.randint(0,256), rng.randint(0,256))
-        color = (256,256,256)
+        color = (256, 256, 256)
         cv.drawContours(drawing, contours, i, color, 2, cv.LINE_8, hierarchy, 0)
     # Show in a window
     drawing = cv.blur(drawing, (5, 5))
     return drawing
     #cv.imshow('Contours', drawing)
 
-
-def get_screen(part=None,color_space=cv.COLOR_RGB2BGR):
+### DONE
+def get_screen(part=None,color_space=cv.COLOR_RGB2BGR,png=None):
     if part == "minimap":
         region = (0, 160, 672, 436)
     elif part == "belt":
@@ -58,35 +90,24 @@ def get_screen(part=None,color_space=cv.COLOR_RGB2BGR):
     elif part:
         region = part
 
-    if part:
+    # Get screen from file
+    if png:
+        # Load image from file
+        screen = cv.imread(png, cv.IMREAD_UNCHANGED)
+        screen = screen[160:596, 0:672]
+        screen = cv.cvtColor(screen, cv.COLOR_RGB2BGR)
+    elif part:
         screen = pyag.screenshot(region=region)
     else:
         screen = pyag.screenshot()
-    screenshot_clean = cv.cvtColor(np.array(screen), color_space)
-    #cv.imshow("screenshot clean",  screenshot_clean)
+
+
+    screen = cv.cvtColor(np.array(screen), color_space)
+    #cv.imshow("screenshot clean",  screen)
     #cv.waitKey(0)
-    return screenshot_clean
+    return screen
 
-
-def multimask(image,mask_colors):
-    #mask_colors = ([130,130,130],[136,136,136],[142,142,142],[123,142,161], [154,154,154])
-    masks_list = []
-    for mask_color in mask_colors:
-        mask_array = np.array(mask_color, dtype = "uint8")
-        new_mask = cv.inRange(image, mask_array, mask_array)
-        masks_list.append(new_mask)
-
-    final_mask = masks_list[0]
-    for mask in masks_list:
-        final_mask = final_mask | mask
-
-    output = cv.bitwise_and(image, image, mask=final_mask)
-
-    #cv.imshow("image masked",  output)
-    #cv.waitKey(0)
-    return output
-
-
+### ABADONED
 def put_mask(image,mask_color):
     mask_array = np.array(mask_color, dtype="uint8")
     new_mask = cv.inRange(image, mask_array, mask_array)
@@ -95,7 +116,7 @@ def put_mask(image,mask_color):
     #cv.waitKey(0)
     return output
 
-
+### DONE
 def image_mask(image,region=None,inverted=False):
     log.debug("Image mask start.")
     best_location, result, screenshot = match(image, region=region)
@@ -125,7 +146,7 @@ def image_mask(image,region=None,inverted=False):
 
     return final
 
-
+### ABADONED
 def get_easy_map(map, char_location):
     log.debug("Start getting transformed map.")
     image_maped = multimask(map,([130,130,130],[136,136,136],[142,142,142],[123,142,161], [154,154,154]))
@@ -164,81 +185,41 @@ def get_easy_map(map, char_location):
     #cv.waitKey(0)
     return final_map
 
-def get_object_location_by_color(map, color, color2=None):
-    log.debug("Checking color {} possition on minimap.".format(color))
-    mask_array = np.array(color, dtype="uint8")
-    if color2 is not None:
-        mask_array2 = np.array(color2, dtype="uint8")
-    else:
-        mask_array2 = np.array(color, dtype="uint8")
-    mask = cv.inRange(map, mask_array, mask_array2)
-    filtered_map = cv.bitwise_and(map, map, mask=mask)
 
-    # convert the image to grayscale
-    gray_image = cv.cvtColor(filtered_map, cv.COLOR_BGR2GRAY)
-
-    #cv.imshow("Final map", gray_image)
-    #cv.waitKey(0)
-
-    # convert the grayscale image to binary image
-    #ret, thresh = cv.threshold(gray_image, 127, 255, 0)
-
-    # find contours in the binary image
-    #contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-
-    #sorted_contours = sorted(contours, key=cv.contourArea, reverse=True)
-    #if sorted_contours:
-    #    biggest_contour = sorted_contours[0]
-    #
-    #    M = cv.moments(biggest_contour)
-    #
-    #    # calculate x,y coordinate of center
-    #    cX = int(M["m10"] / M["m00"])
-    #    cY = int(M["m01"] / M["m00"])
-    #
-    #    log.debug("Found best contour location: ({},{}).".format(cX, cY))
-    #    return (cX, cY)
-    #else:
-    nonzero_points = cv.findNonZero(gray_image)
-    if nonzero_points is None:
-        return None,None
-    middle_point = tuple(nonzero_points[round(len(nonzero_points)/2)][0])
-    log.debug("Found color locations nr: {}. Choosen middle location: {}, type: {}".format(len(nonzero_points),middle_point,type(middle_point)))
-    return middle_point
-
-
+# DIRECTIONER
 def get_tele_location(current_loc,destination_loc):
+    global tele_loc
     log.info("screensize: " + str(screensize))
     current_x, current_y = current_loc
     destination_x, destination_y = destination_loc
     # top
-    if (abs(current_x - destination_x) < 40) and (current_y - destination_y > 30):
+    if (abs(current_x - destination_x) <= 40) and (current_y - destination_y >= 30):
         tele_loc = move_directions["t"]
     # down
-    elif (abs(current_x - destination_x) < 40) and (current_y - destination_y < -30):
+    elif (abs(current_x - destination_x) <= 40) and (current_y - destination_y <= -30):
         tele_loc = move_directions["d"]
     # right
-    elif (current_x - destination_x < -40) and (abs(current_y - destination_y) < 30):
+    elif (current_x - destination_x <= -40) and (abs(current_y - destination_y) <= 30):
         tele_loc = move_directions["r"]
     # left
-    elif (current_x - destination_x > 40) and (abs(current_y - destination_y) < 30):
+    elif (current_x - destination_x >= 40) and (abs(current_y - destination_y) <= 30):
         tele_loc = move_directions["l"]
     # top left
-    elif (current_x - destination_x > 40) and (current_y - destination_y > 30):
+    elif (current_x - destination_x >= 40) and (current_y - destination_y >= 30):
         tele_loc = move_directions["tl"]
     # top right
-    elif (current_x - destination_x < -40) and (current_y - destination_y > 30):
+    elif (current_x - destination_x <= -40) and (current_y - destination_y >= 30):
         tele_loc = move_directions["tr"]
     # down left
-    elif (current_x - destination_x > 40) and (current_y - destination_y < -30):
+    elif (current_x - destination_x >= 40) and (current_y - destination_y <= -30):
         tele_loc = move_directions["dl"]
     # down right
-    elif (current_x - destination_x < -40) and (current_y - destination_y < -30):
+    elif (current_x - destination_x <= -40) and (current_y - destination_y <= -30):
         tele_loc = move_directions["dr"]
 
     return tele_loc
 
-
+### ABADONED
 def minimap_to_game_location(current_loc,destination_loc):
     default_x = 1465
     default_y = 515
@@ -249,14 +230,55 @@ def minimap_to_game_location(current_loc,destination_loc):
 
     return (default_x + ((destination_x - current_x) * point_step),default_y + ((destination_y - current_y) * point_step))
 
+
+### DONE
 def get_map_difference(old_map,new_map):
     # Compare images
     map_diff = np.sum((old_map.astype("float") - new_map.astype("float")) ** 2)
     map_diff /= float(old_map.shape[0] * old_map.shape[1])
-    log.debug("Difference is: " + str(map_diff))
+    log.debug(VisualRecord(("Difference is: {}".format(map_diff)), [old_map, new_map], fmt="png"))
     return map_diff
 
+# DONE
+def multimask(image,mask_colors):
+    #mask_colors = ([130,130,130],[136,136,136],[142,142,142],[123,142,161], [154,154,154])
+    masks_list = []
+    for mask_color in mask_colors:
+        mask_array = np.array(mask_color, dtype = "uint8")
+        new_mask = cv.inRange(image, mask_array, mask_array)
+        masks_list.append(new_mask)
 
+    final_mask = masks_list[0]
+    for mask in masks_list:
+        final_mask = final_mask | mask
+
+    output = cv.bitwise_and(image, image, mask=final_mask)
+
+    # convert the image to grayscale
+    gray_image = cv.cvtColor(output, cv.COLOR_BGR2GRAY)
+    if filter:
+        kernel = np.ones((3, 3), np.uint8)
+        gray_image = cv.morphologyEx(gray_image, cv.MORPH_OPEN, kernel)
+    return gray_image
+
+### DONE
+def get_colored_mask(image, color, color2=None, filter=False):
+    mask_array = np.array(color, dtype="uint8")
+    if color2 is not None:
+        mask_array2 = np.array(color2, dtype="uint8")
+    else:
+        mask_array2 = np.array(color, dtype="uint8")
+    mask = cv.inRange(image, mask_array, mask_array2)
+    filtered_map = cv.bitwise_and(image, image, mask=mask)
+
+    # convert the image to grayscale
+    gray_image = cv.cvtColor(filtered_map, cv.COLOR_BGR2GRAY)
+    if filter:
+        kernel = np.ones((3, 3), np.uint8)
+        gray_image = cv.morphologyEx(gray_image, cv.MORPH_OPEN, kernel)
+    return gray_image
+
+# DONE
 def get_color_location(colors,region=None):
     screen = get_screen(part=region)
     #cv.imshow("screen", screen)
@@ -289,3 +311,38 @@ def get_color_location(colors,region=None):
     log.debug("Location found: " + str(item))
     return item
 
+
+
+###DONE
+def get_object_location_by_color(map, color, color2=None, filter=False):
+    log.debug("Checking color {} possition on minimap.".format(color))
+    gray_image = get_colored_mask(map, color, color2, filter)
+
+    # cv.imshow("Final map", gray_image)
+    # cv.waitKey(0)
+
+    # convert the grayscale image to binary image
+    #ret, thresh = cv.threshold(gray_image, 127, 255, 0)
+
+    # find contours in the binary image
+    #contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+    #sorted_contours = sorted(contours, key=cv.contourArea, reverse=True)
+    #if sorted_contours:
+    #    biggest_contour = sorted_contours[0]
+    #
+    #    M = cv.moments(biggest_contour)
+    #
+    #    # calculate x,y coordinate of center
+    #    cX = int(M["m10"] / M["m00"])
+    #    cY = int(M["m01"] / M["m00"])
+    #
+    #    log.debug("Found best contour location: ({},{}).".format(cX, cY))
+    #    return (cX, cY)
+    #else:
+    nonzero_points = cv.findNonZero(gray_image)
+    if nonzero_points is None:
+        return None,None
+    middle_point = tuple(nonzero_points[round(len(nonzero_points)/2)][0])
+    log.debug("Found color locations nr: {}. Choosen middle location: {}, type: {}".format(len(nonzero_points),middle_point,type(middle_point)))
+    return middle_point

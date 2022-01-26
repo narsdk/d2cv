@@ -8,29 +8,81 @@ import logging.handlers
 import sys
 import datetime
 import os
+from vlogging import VisualRecord
+
+pyag.PAUSE = 0.03
+
+### DONE
+# Improve RotateExtensionLogs class - add possibility to include file extension to log file name
+class RotateExtensionLogs(log.handlers.RotatingFileHandler):
+    def __init__(self, filename, mode='a', maxBytes=0, backupCount=0, encoding=None, delay=False, file_extension=""):
+        super().__init__(filename, mode, maxBytes, backupCount, encoding, delay)
+        self.file_extension = file_extension
+
+    def doRollover(self):
+        """
+        Do a rollover, as described in __init__().
+        """
+        if self.stream:
+            self.stream.close()
+            self.stream = None
+        if self.backupCount > 0:
+            for i in range(self.backupCount - 1, 0, -1):
+                sfn = self.rotation_filename("%s.%d.%s" % (self.baseFilename, i, self.file_extension))
+                dfn = self.rotation_filename("%s.%d.%s" % (self.baseFilename, i + 1, self.file_extension))
+                if os.path.exists(sfn):
+                    if os.path.exists(dfn):
+                        os.remove(dfn)
+                    os.rename(sfn, dfn)
+            dfn = self.rotation_filename(self.baseFilename + ".1." + self.file_extension)
+            if os.path.exists(dfn):
+                os.remove(dfn)
+            self.rotate(self.baseFilename, dfn)
+        if not self.delay:
+            self.stream = self._open()
+
+
+# Add new logging level - visual
+visual_level = log.INFO - 1
+visual_name = "VISUAL"
+visual_method_name = "visual"
+def logForLevel(self, message, *args, **kwargs):
+    if self.isEnabledFor(visual_level):
+        self._log(visual_level, message, args, **kwargs)
+
+def logToRoot(message, *args, **kwargs):
+    logging.log(visual_level, message, *args, **kwargs)
+
+log.addLevelName(visual_level, visual_name)
+setattr(log, visual_name, visual_level)
+setattr(log.getLoggerClass(), visual_method_name, logForLevel)
+setattr(log, visual_method_name, logToRoot)
 
 
 # Set file logger
-log_name = 'log/d2cv.log'
+log_name = 'log/d2cv-log.html'
 
 # Set console logger
 should_roll_over = os.path.isfile(log_name)
-handler = log.handlers.RotatingFileHandler(log_name, mode='w', backupCount=100)
+html_handler = RotateExtensionLogs(log_name, mode='w', backupCount=10, maxBytes=100000, file_extension="html")
 if should_roll_over:  # log already exists, roll over!
-    handler.doRollover()
+    html_handler.doRollover()
 
-log_format = '[%(asctime)s.%(msecs)03d] [%(levelname)s] %(module)s - %(funcName)s: %(message)s'
+html_log_format = '[%(asctime)s.%(msecs)03d] [%(levelname)s] %(module)s - %(funcName)s: %(message)s<br>'
+
 log.basicConfig(
     filename=log_name,
-    level=log.DEBUG,
-    format=log_format,
+    level=log.VISUAL,
+    format=html_log_format,
     datefmt='%H:%M:%S',
 )
 
+log_format = '[%(asctime)s.%(msecs)03d] [%(levelname)s] %(module)s - %(funcName)s: %(message)s'
 console_logging = log.StreamHandler()
 console_logging.setLevel(log.INFO)
 console_logging.setFormatter(log.Formatter(log_format))
 log.getLogger().addHandler(console_logging)
+
 
 # Constants
 MATCH_INTERVAL = 0.01
@@ -40,6 +92,7 @@ CURRENT_RESOLUTION = (2560,1440)
 # Settings
 np.set_printoptions(threshold=sys.maxsize)
 
+### DONE
 def match(image, threshold=0.7, own_screenshot=None, region=None):
 
     log.debug("Matching image " + str(image))
@@ -93,14 +146,14 @@ def match(image, threshold=0.7, own_screenshot=None, region=None):
         log.debug("Image not matched.")
         return None,None
 
-
+### ABADONED
 def convert_location(loc):
     game_w, game_h = D2_RESOLUTION
     real_w, real_h = CURRENT_RESOLUTION
     loc_x, loc_y = loc
     return loc_x * (game_w/real_w), loc_y * (game_h/real_h)
 
-
+### DONE
 def hover(input, convert = False, threshold=0.7,region=None):
     if type(input) == str:
         match_res = match(input, threshold, region=region)
@@ -127,7 +180,7 @@ def hover(input, convert = False, threshold=0.7,region=None):
     else:
         return 0
 
-
+### DONE
 def click(input, threshold=0.7, convert=False, button='left', region=None):
     if type(input) == str:
         match_res = match(input, threshold, region=region)
@@ -151,15 +204,14 @@ def click(input, threshold=0.7, convert=False, button='left', region=None):
             location = convert_location(location)
         log.debug("Clicking location " + str(location))
         pyag.moveTo(location)
-        sleep(0.02)
         pyag.click(button=button)
-        sleep(0.02)
-        pyag.moveTo(1,400)
+        #pyag.moveTo(1,400)
         return 1
     else:
         log.debug("Failed to find " + str(input))
         return 0
 
+### DONE
 def exists(image, seconds=2, threshold=0.7, region=None):
     check_number = 1
     log.debug("Exists started.")
@@ -183,11 +235,14 @@ def exists(image, seconds=2, threshold=0.7, region=None):
             return 0
         check_number += 1
 
+### DONE
 def draw_location(image, location, size, color):
     top_left = location
     bottom_right = (location[0] + size[1], location[1] + size[0])
     return cv.rectangle(image, top_left, bottom_right, color=color, thickness=2, lineType=cv.LINE_4)
 
+
+### DONE
 def find(image,threshold = 0.7,region=None):
     best_location, result, screenshot = match(image, threshold, region=region)
     locations = np.where(result >= threshold)
@@ -199,17 +254,18 @@ def find(image,threshold = 0.7,region=None):
 
     # Draw best location
     for location in locations:
-        draw_location(screenshot, location, (image_size_w, image_size_h), (255, 0, 0))
+        draw_location(screenshot, location, (image_size_w, image_size_h))
 
-    cv.imshow("result", result)
-    cv.waitKey()
-    cv.imshow("All locations", screenshot)
-    cv.waitKey()
-    cv.destroyAllWindows()
+    # cv.imshow("result", result)
+    # cv.waitKey()
+    # cv.imshow("All locations", screenshot)
+    # cv.waitKey()
+    # cv.destroyAllWindows()
 
 #################### DIABLO 2 ACTIONS ####################
 
 
+### ABADONED
 def get_distance(direction,distance):
     res_w, res_h = CURRENT_RESOLUTION
     center_w, center_h = res_w/2, res_h/2

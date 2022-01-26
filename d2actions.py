@@ -12,7 +12,7 @@ from difflib import SequenceMatcher
 # Download and install tesseract from https://github.com/UB-Mannheim/tesseract/wiki
 pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files/Tesseract-OCR/tesseract.exe'
 
-pyag.FAILSAFE = False
+#pyag.FAILSAFE = False
 
 ###### CONFIGURATION
 
@@ -35,7 +35,7 @@ difficulty = "hell"
 
 ### REGIONS
 CENTER_LOCATION = (1280,700)
-MINIMAP_REGION = (0,160,672,436)
+MINIMAP_REGION = (0,50,860,485)
 MERC_REGION = (24,21,95,122)
 #POTIONS_BAR_REGION = (1449,1199,325,77) # 3 bar1450,1126,324,74
 POTIONS_BAR_REGION = (1450,1122,325,77) # 4 bar
@@ -63,11 +63,14 @@ ORANGE_TEXT=[0,163,255]
 
 ######
 
+
+
+
 class GameError(Exception):
     def __init__(self,*args,**kwargs):
         Exception.__init__(self,*args,**kwargs)
 
-
+# POTIONER
 # Get mana or life amount
 def get_resource(resource_type):
     if resource_type == "health":
@@ -124,7 +127,7 @@ def get_resource(resource_type):
     log.debug("Resource: " + str(resource_type) + " value is " + str(resource))
     return resource
 
-
+# POTIONER
 def get_merc_life():
     merc_screen = get_screen(part=MERC_REGION)
     mask1 = cv.inRange(merc_screen, (0, 126, 0), (0, 126, 0))
@@ -155,7 +158,7 @@ def get_merc_life():
     log.debug("Merc life: " + str(merc_life))
     return merc_life
 
-
+# POTIONER
 # Drink potions when needed, started in thread
 def potioner(stop):
     log.info("Start potioner thread.")
@@ -205,7 +208,7 @@ def potioner(stop):
             log.info("Drinking mana potion.")
             drink_potion("mana")
 
-
+# POTIONER
 # Dring mana or health potion
 def drink_potion(type):
     if type == "health":
@@ -215,67 +218,17 @@ def drink_potion(type):
     elif type == "mana":
         pyag.press(str(random.randint(3,4)))
 
+# TO REPLACE IN MAPTRAVELER
 # Random tele or move on lock
-def random_on_lock(old_map, new_map,button = "right"):
+def random_on_lock(old_map, new_map, button = "right"):
     map_diff = get_map_difference(old_map, new_map)
 
     if map_diff < 2500:
         click(random.choice(list(move_directions.values())), button)
+        sleep(1)
 
-def goto_entrance():
-    log.info("Going to located entrance")
-    timeout_counter = 0
-    while True:
-        minimap = get_screen(part="minimap")
 
-        old_map = get_easy_map(minimap,char_location)
-
-        if timeout_counter > 10:
-            log.error("Timeout when going to entrance.")
-            exit(1)
-
-        # Check entrance possition
-        entrance_location = get_object_location_by_color(minimap,[161,49,173])
-        if entrance_location is None:
-            timeout_counter += 1
-            sleep(0.3)
-            log.warning("Cannot find entrance location nr " + str(timeout_counter))
-            continue
-
-        log.info("Character location: {} Entrance location: {}".format(char_location,entrance_location))
-
-        # Go to entrance possition
-        entrance_x, entrance_y = entrance_location
-        char_x, char_y = char_location
-        if abs(entrance_x - char_x) > 40 or abs(entrance_y - char_y) > 30:
-            tele_location = get_tele_location(char_location, entrance_location)
-            click(tele_location, button='right')
-            time.sleep(0.2)
-            minimap = get_screen(part="minimap")
-            new_map = get_easy_map(minimap, char_location)
-            random_on_lock(old_map, new_map)
-
-        # if its close enough then try to find click location
-        else:
-            search_location = minimap_to_game_location(char_location, entrance_location)
-            log.info("search location: " + str(search_location))
-            hover(search_location)
-            if exists("images/dur.png"):
-                log.info("Entrance hovered")
-                if exists("images/3.png"):
-                    log.info("Entering entrance")
-                    click(search_location)
-                    exit(0)
-                else:
-                    log.warning("Wrong entrance found.")
-                    exit(1)
-            else:
-                log.error("Cannot find durance description of entrance")
-                exit(1)
-        # check if its correct entrance (lvl 3 not 1)
-        # if its not correct then mark this part of map as wrong location to be ignored
-        # if yes then go in
-
+# ABADONED
 def goto_wp(point):
     log.info("Going to way point.")
     while not exists("images/wp-active.png"):
@@ -297,59 +250,8 @@ def goto_wp(point):
         log.error("Cannot find point " + point)
         return 1
 
-def teleporter():
-    time.sleep(5)
-    tele_locations = [(10,10),(2550,10),(2550,1100),(10,1100)]
-    tele_nr = 1
 
-    minimap = get_screen(part="minimap")
-    char_location_x, char_location_y = get_object_location_by_color(minimap,[254, 148, 55])
-    char_location = (char_location_x - 3, char_location_y - 3)
-    old_map = get_easy_map(minimap,char_location)
-
-
-    turn_counter = 0
-    block_counter = 0
-    side_checker = 0
-    while True:
-        turn_counter += 1
-        log.debug("Start turn nr: " + str(turn_counter))
-        # Drink potion every 20 turns
-        if turn_counter % 20 == 0:
-            drink_potion("mana")
-        #Teleport
-        click(tele_locations[(tele_nr+(side_checker % 2)) % len(tele_locations)],button='right')
-        if side_checker > 0:
-            side_checker -= 1
-
-        time.sleep(0.2)
-
-        minimap = get_screen(part="minimap")
-
-        # Checking if entrance was found
-        entrance_map = put_mask(minimap,[161,49,173])
-        if np.sum(entrance_map) > 0:
-            log.debug("Entrance found. np.sum: " + str(np.sum(entrance_map)))
-            goto_entrance()
-            exit(0)
-
-        new_map = get_easy_map(minimap,char_location)
-        old_map = new_map
-
-        map_diff = get_map_difference(old_map,new_map)
-
-        # Change tele location if map diff is small
-        if map_diff < 2500:
-            if block_counter < 1:
-                block_counter += 1
-            else:
-                #tele_nr = (tele_nr + 1) % len(tele_locations)
-                tele_nr = (tele_nr + random.choice([-1,1])) % len(tele_locations)
-                log.debug("Chaning tele location to: " + str(tele_locations[tele_nr]))
-                block_counter = 0
-                side_checker = 3
-
-
+# RESTORER
 # Restore game after crash
 def game_restore():
     log.info("Game restoring start")
@@ -397,6 +299,7 @@ def game_restore():
         log.info("Play exists?")
 
 
+# GAME CREATOR
 # Start game
 def start_game():
     log.info("Checking if temviewer message exists.")
@@ -410,7 +313,7 @@ def start_game():
         log.error("ERROR: Cannot find game")
         raise GameError
 
-
+# GAME CREATOR
 def create_game(difficulty):
     if exists("images/online.png"):
         log.info("Online found. clicking it.")
@@ -419,7 +322,7 @@ def create_game(difficulty):
     click("images/play.png")
     sleep(0.2)
     click("images/{}.png".format(difficulty))
-    create_timeout = 0.5
+    create_timeout = 0.25
     while exists("images/ok.png",2):
         log.error("Failed to create a game. Waiting {} minutes to retry.".format(create_timeout))
         click("images/ok.png")
@@ -432,7 +335,7 @@ def create_game(difficulty):
         log.error("Failed to create a game")
         raise GameError
 
-
+# GAME CREATOR
 def exit_game():
     log.info("Exiting game.")
     exiting_timeout = 0
@@ -451,7 +354,7 @@ def exit_game():
         click("images/save_and_exit.png")
         sleep(5)
 
-
+# TOWN MANAGEMENT
 def pre_game_actions():
     log.debug("Pre game actions.")
     # Activate minimap
@@ -472,10 +375,10 @@ def pre_game_actions():
     sleep(0.2)
     manage_potions()
 
-
+# TOWN MANAGEMENT
 def pickup_corpse():
     log.debug("Pickup corpse start.")
-    minimap = get_screen(part="minimap")
+    minimap = get_screen(part=MINIMAP_REGION)
     corpse_finder = get_object_location_by_color(minimap, [251,0,251], [255,1,255])
     if corpse_finder != (None,None):
         log.info("Corpse found.")
@@ -487,7 +390,7 @@ def pickup_corpse():
     else:
         log.debug("Corpse not found.")
 
-
+# TOWN MANAGEMENT
 def manage_potions():
     log.debug("Start manage potions.")
     pyag.press("i")
@@ -516,7 +419,7 @@ def manage_potions():
 
     pyag.press("i")
 
-
+# TOWN MANAGEMENT
 def manage_merc():
     log.debug("Manage merc start.")
     if not exists("images/merc_exists.png",0.2,region=MERC_REGION):
@@ -534,6 +437,7 @@ def manage_merc():
             go_to_destination("images/merc_trader.png", (80, 50))
         go_to_destination("images/stash.png", (-80, 35), accepted_distance=15)
 
+# TOWN MANAGEMENT
 def buy_potions():
     log.debug("Buy potions start.")
     pyag.press("~")
@@ -574,18 +478,12 @@ def buy_potions():
         log.info("No empty potion slot find.")
         pyag.press("~")
 
-
+# DIRECTIONER
 def get_move_location(diff_location_x,diff_location_y,distance_step):
     distance_min, distance_max = distance_step
     log.debug("Calculating move location from diff_location_x:{},diff_location_y:{},distance_min:{},distance_max:{}".format(diff_location_x,diff_location_y,distance_min,distance_max))
     random_distance = random.randint(distance_min,distance_max)
-
-    # Old calculations
-    higher_diff = abs(diff_location_x) if abs(diff_location_x) > abs(diff_location_y) else abs(diff_location_y)
-    distance_multiplier = random_distance / higher_diff
     center_x, center_y = CENTER_LOCATION
-    old_result_x = int(center_x + (diff_location_x * distance_multiplier))
-    old_result_y = int(center_y + (diff_location_y * distance_multiplier))
 
     # New calculations
     current_lenght = math.sqrt((diff_location_x**2) + (diff_location_y**2))
@@ -593,30 +491,42 @@ def get_move_location(diff_location_x,diff_location_y,distance_step):
     result_x = int(center_x + (diff_location_x * distance_factor))
     result_y = int(center_y + (diff_location_y * distance_factor))
 
-    log.info("Move location result: OLD: ({},{}) NEW: ({},{})".format(old_result_x,old_result_y,result_x,result_y))
+    log.debug("Move location result: ({},{})".format(result_x,result_y))
 
     return result_x,result_y
 
+# MAP TRAVELER
+def get_char_location(minimap):
+    char_location = (None,None)
+    fail_counter = 0
+    while char_location == (None,None):
+        char_location = get_object_location_by_color(minimap, [159, 85, 21],[253, 136, 43])
+        if char_location == (None, None):
+            # If character counter on minimap is under some text then color is different
+            char_location = get_object_location_by_color(minimap, [193, 104, 25],[253, 136, 33])
+            if char_location == (None, None):
+                log.warning("Failed to find character.")
+                fail_counter += 1
+                sleep(0.1)
+                if fail_counter > 5:
+                    return (433, 248)
+    return char_location
 
+
+# DIRECTIONER
 # return vector of distance of character from destination point on minimap
 # destination can be an image patch or colors range in touple
-def get_diff_from_destination(destination, shift=None):
+def get_diff_from_destination(destination, shift=None,filter=False):
     log.debug("Starting get_diff_from_destination")
-    minimap = get_screen(part="minimap")
+    minimap = get_screen(part=MINIMAP_REGION)
 
-    char_location = get_object_location_by_color(minimap, [246, 127, 28], [253, 130, 28])
-    if char_location == (None,None):
-        # If character counter on minimap is under some text then color is different
-        char_location = get_object_location_by_color(minimap, [108, 57, 14], [127, 65, 14])
-        if char_location == (None, None):
-            log.warning("Failed to find character.")
-            return None, None
+    char_location = get_char_location(minimap)
 
     if type(destination) == str:
         destination_location, *rest = match(destination, own_screenshot=minimap)
     else:
         destination_color1, destination_color2 = destination
-        destination_location = get_object_location_by_color(minimap, destination_color1, destination_color2)
+        destination_location = get_object_location_by_color(minimap, destination_color1, destination_color2, filter)
 
     if destination_location == (None,None) or destination_location == None:
         log.warning("Failed to find destination.")
@@ -636,8 +546,8 @@ def get_diff_from_destination(destination, shift=None):
 
     return diff_location_x, diff_location_y
 
-
-def go_to_destination(destination,shift=None,move_step=(250,350),accepted_distance=20,steps_timeout=30,critical=True):
+# CHARACTER
+def go_to_destination(destination,shift=None,move_step=(250,350),accepted_distance=20,steps_timeout=30,critical=True, filter=False, button="left",move_sleep=0):
     step = 0
     error_counter = 0
     log.info("Going to destination " + str(destination))
@@ -658,7 +568,7 @@ def go_to_destination(destination,shift=None,move_step=(250,350),accepted_distan
             pyag.press("esc")
         log.debug("waypoint checked.")
 
-        diff_location_x, diff_location_y = get_diff_from_destination(destination, shift=shift)
+        diff_location_x, diff_location_y = get_diff_from_destination(destination, shift=shift, filter=filter)
 
         # Error counter is used to do not fail function if we do not detect image in single iteration.
         if diff_location_x == None:
@@ -673,12 +583,13 @@ def go_to_destination(destination,shift=None,move_step=(250,350),accepted_distan
 
         if abs(diff_location_x) > accepted_distance or abs(diff_location_y) > accepted_distance:
             move_location = get_move_location(diff_location_x,diff_location_y,move_step)
-            click(move_location)
+            click(move_location,button=button)
+            sleep(move_sleep)
         else:
             log.info("Destination reached.")
             return True
 
-
+# CHARACTER
 def enter_destination(destination,hover_image,final_image,dest_shift=None,special_shift=None):
     enter_max_attempts = 5
     enter_timeout = 0
@@ -697,7 +608,7 @@ def enter_destination(destination,hover_image,final_image,dest_shift=None,specia
                 log.debug("Destination entered correctly.")
                 return True
 
-
+# CHARACTER
 def hover_destination(destination,hover_image,dest_shift=None,special_shift=None):
     hover_destination_timeout = 0
     while True:
@@ -734,11 +645,11 @@ def hover_destination(destination,hover_image,dest_shift=None,special_shift=None
             shift_x, shift_y = shift
             checking_location = (center_x + (diff_location_x * 15) + shift_x + special_shift_x, center_y + (diff_location_y * 15) + shift_y + special_shift_y)
             hover(checking_location)
-            if exists(hover_image,0.1):
+            if exists(hover_image,0.05):
                 log.info("Found {} on location {}".format(hover_image,checking_location))
                 return True
 
-
+# TASKER
 def go_to_anya():
     log.info("Going to anya start")
     go_to_destination("images/anya.png", (100, 40))
@@ -746,7 +657,7 @@ def go_to_anya():
     sleep(0.3)
     enter_destination(([0, 239, 239],[0, 243, 243]), "images/nihlak_portal.png","images/ingame.png",special_shift=(-60,0))
 
-
+# TASKER
 def tele_to_pindle():
     log.info("Teleporting to pindle start.")
     tele_timeout = 0
@@ -776,7 +687,7 @@ def tele_to_pindle():
             log.debug("Teleporting to pindle completed.")
             return True
 
-
+# TASKER
 def kill_pindle():
     log.info("Killing pindle start.")
     pyag.press(ATTACK_KEY)
@@ -801,7 +712,7 @@ def kill_pindle():
         if i % 6 == 0:
             pyag.press(ATTACK_KEY2)
 
-
+# LOOT_COLLECTOR
 def collect_loot():
     log.debug("Collect loot start")
     rune_color = (0, 163, 255)
@@ -856,7 +767,7 @@ def collect_loot():
         click(item)
         sleep(1)
 
-
+# LOOT_COLLECTOR
 def get_equipment_item():
     log.debug("get_equipment_item start")
     occupied_equipment = image_mask("images/empty_equipment.png",region=EQUPMENT_REGION,inverted=True)
@@ -874,7 +785,7 @@ def get_equipment_item():
     log.info("Found item on location: " + str(item))
     return item
 
-
+# LOOT_COLLECTOR
 def store_items():
     log.debug("Store items start")
     check_equipment = False
@@ -975,7 +886,7 @@ def store_items():
     else:
         pyag.press("i")
 
-
+# LOOT_COLLECTOR
 def item_classification(item_name,rarity):
     global good_items
     for good_item in good_items[rarity]:
@@ -987,6 +898,7 @@ def item_classification(item_name,rarity):
     else:
         return False
 
+# LOOT_COLLECTOR
 def get_item_region():
     screen = get_screen(part=(1380,0,1142,1440))
     masked_screen = multimask(screen, [62,62,62])
@@ -1014,7 +926,7 @@ def get_item_region():
 
     return x, y, w, h
 
-
+# LOOT_COLLECTOR
 def get_item_rarity(item_region):
     x,y,w,h = item_region
     item_name_region = x,y,w,50
@@ -1031,7 +943,7 @@ def get_item_rarity(item_region):
         rarity = "unknown"
     return rarity
 
-
+# LOOT_COLLECTOR
 def get_item_description():
     item_region = get_item_region()
     screen = get_screen(part=(item_region))
@@ -1090,8 +1002,759 @@ def get_item_description():
     log.debug("Full item description: " + str(text))
     return text,rarity
 
+# Development Util
+def get_pixels(image):
+    img = cv.imread(image, cv.IMREAD_UNCHANGED)
+    #img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+    img = [item for sublist in img.tolist() for item in sublist]
+    print(img)
+    result_s = []
+    result_b = []
+    for x in range(0,3):
+        smallest = [1000,1000,1000]
+        biggest = [0,0,0]
+        print("Run for " + str(x))
+        for i in img:
+            if i[x] < smallest[x]:
+                smallest = i
+            if i[x] > biggest[x]:
+                biggest = i
+        print("s:{} b:{}".format(smallest,biggest))
+        result_s.append(smallest[x])
+        result_b.append(biggest[x])
+
+    print("Result: " + str(result_s) + str(result_b))
+
+# MAPPER - DONE
+def get_meph_map(minimap,mode="full"):
+    minimap_hsv = cv.cvtColor(minimap, cv.COLOR_BGR2HSV)
+    # walls colors
+    lower_map = np.array([0, 16, 27])
+    upper_map = np.array([32, 133, 106])
+    # other borders colors
+    # original
+    # lower_map2 = np.array([14, 6, 44])
+    # upper_map2 = np.array([45, 87, 141])
+
+    lower_map2 = np.array([0, 0, 44])
+    upper_map2 = np.array([45, 87, 160])
+
+    kernel = np.ones((3, 3), np.uint8)
+    kernel2 = np.ones((1, 2), np.uint8)
+
+    minimap_mask = cv.inRange(minimap_hsv, lower_map, upper_map)
+    minimap_mask2 = cv.inRange(minimap_hsv, lower_map2, upper_map2)
+
+    minimap_mask = cv.morphologyEx(minimap_mask, cv.MORPH_OPEN, kernel)
+    minimap_mask2 = cv.morphologyEx(minimap_mask2, cv.MORPH_OPEN, kernel2)
+
+    if mode == "full":
+        full_mask = cv.bitwise_or(minimap_mask, minimap_mask2)
+    elif mode == "walls":
+        full_mask = minimap_mask
+    elif mode == "shore":
+        full_mask = minimap_mask2
+
+
+    # Hide merc
+    merc_rectangle = np.array([[[30,0],[111,0],[111,92],[30,92]]],dtype=np.int32)
+    cv.fillPoly(full_mask, merc_rectangle, (0, 0, 0))
+
+    #full_mask = clear_map(full_mask, 30)
+
+    target = cv.bitwise_and(minimap, minimap, mask=full_mask)
+
+    return full_mask,target
+
+# MAP TRAVELER
+def get_meph_start_direction(map, minimap):
+    map_canny = cv.Canny(map, 50, 200, None, 3)
+
+    # cv.imshow("map", map)
+    # cv.waitKey()
+    #cv.imshow("minimap_mask2", minimap_mask2)
+
+    def change_canny_min(val):
+        mask_canny = cv.Canny(map, 50, val)
+        cv.imshow(window_name, mask_canny)
+
+
+    # window_name = "map"
+    # cv.imshow(window_name, mask_canny)
+    # cv.createTrackbar('min', window_name, 0, 500, change_canny_min)
+    # cv.waitKey(0)
+
+    char_possition = get_char_location(minimap)
+
+    # Copy edges to the images that will display the results in BGR
+    cdstP = cv.cvtColor(map_canny, cv.COLOR_GRAY2BGR)
+
+    linesP = cv.HoughLinesP(map_canny, 1, np.pi / 180, 10, None, 20, 10)
+
+    if linesP is not None:
+        cv.circle(cdstP, char_possition, 5, color=(255, 0, 0),thickness=5)
+        longest_line_size = 0
+        for i in range(0, len(linesP)):
+            l = linesP[i][0]
+            #cv.line(cdstP, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 3, cv.LINE_AA)
+            line_size =  math.sqrt((((l[0] - l[2])**2) + ((l[1] - l[3])**2)))
+            if line_size > longest_line_size:
+                longest_line_size = line_size
+                longest_line = l
+        cv.line(cdstP, (longest_line[0], longest_line[1]), (longest_line[2], longest_line[3]), (0, 0, 255), 3, cv.LINE_AA)
+    else:
+        log.error("Cannot find longest line")
+
+    log.debug("Character location: {} Line parameters: {}. Differences: [{} {} {} {}]".format(char_possition,longest_line,longest_line[0]-char_possition[0],longest_line[1]-char_possition[1],longest_line[2]-char_possition[0],longest_line[3]-char_possition[1]))
+
+    line_x1, line_y1, line_x2, line_y2 = longest_line
+    line_x1 = line_x1 - char_possition[0]
+    line_x2 = line_x2 - char_possition[0]
+    line_y1 = line_y1 - char_possition[1]
+    line_y2 = line_y2 - char_possition[1]
+
+    # Checking values for right
+    if -10 < line_x1 < 60 and \
+        20 < line_y1 < 60 and \
+        120 < line_x2 < 190 and \
+        -40 < line_y2 < 0:
+        result = "tr"
+
+    # Checking values for top
+    elif -150 < line_x1 < -30 and \
+         -30 < line_y1 < 30 and \
+         0 < line_x2 < 60 and \
+         30 < line_y2 < 100:
+        result = "tl"
+
+    # Checking values for left
+    elif -50 < line_x1 < 0 and \
+        30 < line_y1 < 120 and \
+        30 < line_x2 < 120 and \
+        -20 < line_y2 < 30:
+        result = "dl"
+
+    # Checking values for down
+    elif -130 < line_x1 < -20 and \
+         -30 < line_y1 < 30 and \
+         -20 < line_x2 < 80 and \
+         40 < line_y2 < 150:
+        result = "dr"
+
+    else:
+        log.warning("Didnt found best direction for meph route.")
+        result = "tl"
+
+    cv.putText(cdstP,result,(400,400),cv.FONT_HERSHEY_SIMPLEX,1,(255, 0, 0),2)
+    map = cv.cvtColor(map, cv.COLOR_GRAY2BGR)
+    #cv.imshow("Result", np.hstack([minimap, map, cdstP]))
+    #cv.waitKey(0)
+
+    return result
+
+# CHARACTER
+def teleport_to(direction,distance,sleep_time=0.25, offset=None, mode="normal"):
+    log.info("Teleport start")
+    direction_location_x, direction_location_y = move_directions[direction]
+    center_x, center_y = CENTER_LOCATION
+
+    if offset is not None:
+        direction_location_x, direction_location_y = direction_location_x + offset[0], direction_location_y + offset[1]
+    teleport_location = get_move_location(direction_location_x - center_x, direction_location_y - center_y, (distance,distance))
+
+    if mode == "normal":
+        click(teleport_location,button="right")
+    elif mode == "continous":
+        pyag.moveTo(teleport_location)
+        pyag.mouseDown(button='right')
+    sleep(sleep_time)
+    if mode == "continous":
+        pyag.mouseUp(button='right')
+    log.info("Teleport end")
+
+# MAP TRAVELER
+def get_out_direction(meph_map,meph_mask,char_possition):
+    _,_,minimap_res_x,minimap_res_y = MINIMAP_REGION
+    for direction in move_directions:
+        dir_location = direction_resolver(direction,(minimap_res_x,minimap_res_y))
+        log.info("Minimap direction {} location {}".format(direction,dir_location))
+    output = meph_map.copy()
+    contours, hierarchy = cv.findContours(meph_mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+    if len(contours) != 0:
+        # draw in blue the contours that were founded
+        #cv.drawContours(output, contours, -1, 255, 3)
+
+        # find the biggest countour (c) by the area
+        c = max(contours, key=cv.contourArea)
+        cv.drawContours(output, c, -1, 255, 3)
+        (x,y),(MA,ma),angle = cv.fitEllipse(c)
+        log.info("(x:{},y:{}),(MA:{},ma:{}),angle:{}".format(x,y,MA,ma,angle))
+        cv.circle(output,(int(x),int(y)),5,[255,0,0],-1)
+        cv.circle(output, (int(MA), int(ma)), 5, [0, 255, 0], -1)
+        log.info("Angle: " + str(angle))
+        #x, y, w, h = cv.boundingRect(c)
+
+        # draw the biggest contour (c) in green
+        #cv.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+    #cv.imshow("Result", np.hstack([meph_map, output]))
+    #cv.waitKey(0)
+
+# MAPPER - ABADONED
+def clear_map(map,min_size):
+    # find all your connected components (white blobs in your image)
+    nb_components, output, stats, centroids = cv.connectedComponentsWithStats(map, connectivity=8)
+    # connectedComponentswithStats yields every seperated component with information on each of them, such as size
+    # the following part is just taking out the background which is also considered a component, but most of the time we don't want that.
+    sizes = stats[1:, -1];
+    nb_components = nb_components - 1
+
+    # your answer image
+    map2 = np.zeros((output.shape))
+    # for every component in the image, you keep it only if it's above min_size
+    for i in range(0, nb_components):
+        if sizes[i] >= min_size:
+            map2[output == i + 1] = 255
+
+    ret, map3 = cv.threshold(map2, 128, 255, cv.THRESH_BINARY)
+
+    #cv.imshow("Cleared Map", np.hstack([map, map2, map3]))
+    #cv.waitKey(0)
+
+    return map3
+
+
+### ABADONED
+def teleporter():
+    time.sleep(5)
+    tele_locations = [(10,10),(2550,10),(2550,1100),(10,1100)]
+    tele_nr = 1
+
+    minimap = get_screen(part=MINIMAP_REGION)
+    char_location_x, char_location_y = get_object_location_by_color(minimap,[254, 148, 55])
+    char_location = (char_location_x - 3, char_location_y - 3)
+    old_map = get_easy_map(minimap,char_location)
+
+
+    turn_counter = 0
+    block_counter = 0
+    side_checker = 0
+    while True:
+        turn_counter += 1
+        log.debug("Start turn nr: " + str(turn_counter))
+        # Drink potion every 20 turns
+        if turn_counter % 20 == 0:
+            drink_potion("mana")
+        #Teleport
+        click(tele_locations[(tele_nr+(side_checker % 2)) % len(tele_locations)],button='right')
+        if side_checker > 0:
+            side_checker -= 1
+
+        time.sleep(0.2)
+
+        minimap = get_screen(part=MINIMAP_REGION)
+
+        # Checking if entrance was found
+        entrance_map = put_mask(minimap,[161,49,173])
+        if np.sum(entrance_map) > 0:
+            log.debug("Entrance found. np.sum: " + str(np.sum(entrance_map)))
+            goto_entrance()
+            exit(0)
+
+        new_map = get_easy_map(minimap,char_location)
+        old_map = new_map
+
+        map_diff = get_map_difference(old_map,new_map)
+
+        # Change tele location if map diff is small
+        if map_diff < 2500:
+            if block_counter < 1:
+                block_counter += 1
+            else:
+                #tele_nr = (tele_nr + 1) % len(tele_locations)
+                tele_nr = (tele_nr + random.choice([-1,1])) % len(tele_locations)
+                log.debug("Chaning tele location to: " + str(tele_locations[tele_nr]))
+                block_counter = 0
+                side_checker = 3
+
+
+# MAPPER
+def find_line(meph_map, direction="tl", type="terain"):
+    meph_map = cv.cvtColor(meph_map, cv.COLOR_GRAY2BGR)
+    map_lined_normal = meph_map.copy()
+
+    map_blured = cv.GaussianBlur(map_lined_normal, (9, 9), 0)
+
+    thresh, map_blured = cv.threshold(map_blured, 50, 255, cv.THRESH_BINARY)
+    map_blured_gray = cv.cvtColor(map_blured, cv.COLOR_BGR2GRAY)
+
+    cnts,hierarchy = cv.findContours(map_blured_gray.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    #cnts = imutils.grab_contours(cnts)
+    #contoured_image = cv.drawContours(map_blured,cnts,-1, (0,255,0), 3)
+
+    list_of_pts = []
+    for ctr in cnts:
+        list_of_pts += [pt[0] for pt in ctr]
+
+    ctr = np.array(list_of_pts).reshape((-1, 1, 2)).astype(np.int32)
+    hull = cv.convexHull(ctr)
+
+    #log.info("cnts: " + str(cnts))
+    #log.info("ctr: " + str(cnts))
+    #log.info("hull: " + str(cnts))
+
+    # create hull array for convex hull points
+    #hull = []
+
+    # calculate points for each contour
+    #for i in range(len(cnts)):
+        # creating convex hull object for each contour
+    #    hull.append(cv.convexHull(cnts[i], False))
+
+    # create an empty black image
+    #drawing = np.zeros((map_blured.shape[0], map_blured.shape[1], 3), np.uint8)
+    #cv.drawContours(map_blured, hull, -1, (255, 0, 0) , 4, cv.FILLED)
+    # draw contours and hull points
+    # for i in range(len(cnts)):
+    #     color_contours = (0, 255, 0)  # green - color for contours
+    #     #color = (255, 0, 0)  # blue - color for convex hull
+    #
+    #     # draw ith contour
+    #     cv.drawContours(map_blured, cnts, i, color_contours, 1, 8, hierarchy)
+    #     # draw ith convex hull object
+    #     #cv.drawContours(drawing, hull, i, color, 1, 8)
+
+    ########################## FEATURES
+
+    map_mask = np.zeros((map_blured_gray.shape[0],map_blured_gray.shape[1]), np.uint8)
+    #map_mask = cv.cvtColor(map_mask,cv.COLOR_GRAY2BGR)
+    #map_mask = cv.rectangle(map_mask,(30,30),(55,70),255,-1)
+    # map_slicer = {
+    #     "tl": minimap[148:248, 336:436],
+    #     "tr": minimap[148:248, 436:536],
+    #     "dr": minimap[248:348, 436:536],
+    #     "dl": minimap[248:348, 336:436]
+    # }
+    if type == "terain":
+        mask_direction_poly = {
+            "tl": np.array([[(15, 65), (40, 45), (80, 65), (55, 85)]]), # done
+            "tr": np.array([[(15, 70), (40, 90), (80, 60), (55, 40)]]), # done
+            "dl": np.array([[(50, 00), (80, 30), (40, 50), (10, 20)]]), # done
+            "dr": np.array([[(40, 10), (15, 30), (55, 60), (80, 40)]]) # done
+        }
+    elif type == "wall":
+        mask_direction_poly = {
+            "tl": np.array([[(100, 80), (70, 100), (100, 100)]]),  # done
+            "tr": np.array([[(0, 80), (30, 100), (0, 100)]]),  # done
+            "dl": np.array([[(70, 0), (100, 20), (100, 0)]]),  # done
+            "dr": np.array([[(0, 0), (0, 20), (30, 0)]])  # done
+        }
+    map_mask = cv.fillPoly(map_mask, pts=[mask_direction_poly[direction]], color=(255,255,255))
+
+    masked_mask = cv.bitwise_and(map_blured_gray,map_mask)
+
+    # Copy edges to the images that will display the results in BGR
+    # map_lined = cv.cvtColor(map_canny, cv.COLOR_GRAY2BGR)
+
+    #map_canny = cv.Canny(map_part, 50, 200, None, 3)
+
+    linesP = cv.HoughLinesP(masked_mask, 1, np.pi / 180, 10, None, 10, 10)
+
+    longest_line_size = 0
+    if linesP is not None:
+        for i in range(0, len(linesP)):
+           l = linesP[i][0]
+           #cv.line(map_lined_normal, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 3, cv.LINE_AA)
+           line_size = math.sqrt((((l[0] - l[2]) ** 2) + ((l[1] - l[3]) ** 2)))
+           if line_size > longest_line_size:
+               longest_line_size = line_size
+               longest_line = l
+        cv.line(map_lined_normal, (longest_line[0], longest_line[1]), (longest_line[2], longest_line[3]), (0, 0, 255), 3, cv.LINE_AA)
+
+
+    log.debug("Longest line size on map is " + str(longest_line_size))
+
+
+    # cv.imshow("mask",np.hstack([map_lined_normal,masked_mask]))
+    # cv.waitKey()
+    #mask = cv.cvtColor(mask,cv.COLOR_GRAY2BGR)
+
+    # feature_params = dict(maxCorners=500,
+    #                       qualityLevel=0.2,
+    #                       minDistance=10,
+    #                       blockSize=15,
+    #                       mask=map_mask,
+    #                       useHarrisDetector=True
+    #                       )
+    #
+    # corners = cv.goodFeaturesToTrack(map_blured_gray, **feature_params)
+    # if corners is not None:
+    #     for x, y in np.float32(corners).reshape(-1, 2):
+    #         cv.circle(map_lined_normal, (int(x), int(y)), 10, (0, 255, 0), 1)
+    #     corners_number = len(corners)
+    # else:
+    #     corners_number = 0
+
+    border = np.full((meph_map.shape[0],1,3),(0,0,255),np.float32)
+    map_mask = cv.cvtColor(map_mask,cv.COLOR_GRAY2BGR)
+    masked_mask = cv.cvtColor(masked_mask,cv.COLOR_GRAY2BGR)
+
+    # cv.imshow("test", np.hstack([meph_map,border,map_mask,border,masked_mask,border,map_lined_normal]))
+    # cv.waitKey(0)
+
+    ############################# FEATURES KEYPOINTS
+
+    # orb = cv.ORB_create(500)
+    # keypoints1, descriptors1 = orb.detectAndCompute(map_blured_gray, None)
+    # map_lined_normal = cv.drawKeypoints(map_lined_normal, keypoints1, outImage=np.array([]), color=(255, 0, 0), flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+    # c = max(cnts, key=cv.contourArea)
+    # extLeft = tuple(c[c[:, :, 0].argmin()][0])
+    # extRight = tuple(c[c[:, :, 0].argmax()][0])
+    # extTop = tuple(c[c[:, :, 1].argmin()][0])
+    # extBot = tuple(c[c[:, :, 1].argmax()][0])
+    # cv.drawContours(map_blured, [c], -1, (0, 255, 255), 1)
+    # cv.circle(map_blured, extLeft, 8, (0, 0, 255), -1)
+    # cv.circle(map_blured, extRight, 8, (0, 255, 0), -1)
+    # cv.circle(map_blured, extTop, 8, (255, 0, 0), -1)
+    # cv.circle(map_blured, extBot, 8, (255, 255, 0), -1)
+
+    return map_lined_normal, longest_line_size
+
+# MAPPER
+def check_direction(minimap, current_direction,turn=None, type="terain"):
+    #character location (434, 248)
+
+    # Old possitions:
+    # map_slicer = {
+    #     "tl": minimap[148:248, 336:436],
+    #     "tr": minimap[148:248, 436:536],
+    #     "dr": minimap[248:348, 436:536],
+    #     "dl": minimap[248:348, 336:436]
+    # }
+
+    map_slicer = {
+        "tl": minimap[148:248, 336:436],
+        "tr": minimap[152:252, 430:530],
+        "dr": minimap[240:340, 430:530],
+        "dl": minimap[242:342, 338:438]
+    }
+
+    # for mode in [cv.RETR_EXTERNAL,cv.RETR_LIST,cv.RETR_CCOMP,cv.RETR_TREE,cv.RETR_FLOODFILL]:
+    #     for method in [cv.CHAIN_APPROX_NONE, cv.CHAIN_APPROX_SIMPLE, cv.CHAIN_APPROX_TC89_L1, cv.CHAIN_APPROX_TC89_KCOS]:
+    #find_external_points(minimap)
+    # ext_tl, corners_tl = find_external_points(map_slicer["tl"])
+    # ext_tr, corners_tr = find_external_points(map_slicer["tr"])
+    # ext_dl, corners_dl = find_external_points(map_slicer["dl"])
+    # ext_dr, corners_dr = find_external_points(map_slicer["dr"])
+    # empty = np.ones((ext_dr.shape[0], ext_dr.shape[1], 3), np.uint8)
+
+    #cv.imshow("minimap", np.hstack([map_slicer["tl"],map_slicer["tr"],map_slicer["dl"],map_slicer["dr"]]))
+    # cv.imshow("test", np.hstack([ext_tl, empty, ext_tr, empty, ext_dl, empty, ext_dr]))
+    # cv.waitKey(0)
+
+    if turn == "left":
+        screen_direction = direction_numbers[(direction_numbers.index(current_direction) - 1) % 4]
+    elif turn == "right":
+        screen_direction = direction_numbers[(direction_numbers.index(current_direction) - 1) % 4]
+    else:
+        screen_direction = current_direction
+    log.debug("Checking screen from direction " + str(screen_direction))
+    map_part = map_slicer[screen_direction]
+
+    test_scr, line_size = find_line(map_part, screen_direction, type)
+    log.visual(VisualRecord(("Checking direction: {} turn: {}".format(current_direction, turn)), [test_scr], fmt="png"))
+    # cv.imshow("test", np.hstack([test_scr]))
+    # cv.waitKey(0)
+
+    if line_size > 0:
+        return True
+    else:
+        return False
+
+
+# MAP_TRAVELER
+def find_new_direction(current_direction, minimap, old_minimap, block_counter, changed, last_moves):
+    log.info("Finding new direction")
+
+    # Check if character stuck
+    if get_map_difference(old_minimap, minimap) < 1000:
+        character_blocked = True
+    else:
+        character_blocked = False
+    new_terain = check_direction(minimap, current_direction, turn="left")
+
+    last_changes = sum(map(lambda x: x[2] == 3, last_moves[-15:]))
+    new_terain_last5 = sum(map(lambda x: x[3] == True, last_moves[-5:]))
+
+    if new_terain_last5 >= 5:
+        log.info("New terain since {} loops, going straight.".format(new_terain_last5))
+
+    if not character_blocked and not new_terain:
+        block_counter = 0
+        changed = 0
+        direction_result = current_direction
+        log.info("Continuing with old direction " + str(direction_result))
+
+    elif not character_blocked and new_terain:
+        block_counter = 0
+        if changed < 1 and last_changes < 2 and new_terain_last5 < 5:
+            direction_result = direction_numbers[(direction_numbers.index(current_direction) - 1) % 4]
+            changed = 3
+            log.info("Found new direction. Next tele direction is " + str(direction_result))
+        else:
+            direction_result = current_direction
+            log.info("Round workaround with old direction " + str(direction_result))
+            changed -= 1
+
+    elif character_blocked and not new_terain:
+        changed = 0
+        if block_counter < 1:
+            block_counter += 1
+            direction_result = current_direction
+            log.info("Character stuck. Trying again " + str(direction_result))
+        else:
+            direction_result = direction_numbers[(direction_numbers.index(current_direction) + 1) % 4]
+            block_counter = 0
+            log.info("Character stuck. Next tele direction is " + str(direction_result))
+
+    elif character_blocked and new_terain:
+        if changed < 1 and last_changes < 2:
+            direction_result = direction_numbers[(direction_numbers.index(current_direction) - 1) % 4]
+            changed += 1
+            block_counter += 1
+            log.info("Found new direction when character is blocked. Next tele direction is " + str(direction_result))
+        elif block_counter >= 2:
+            block_counter = 0
+            direction_result = direction_numbers[(direction_numbers.index(current_direction) + 1) % 4]
+            log.info("Found new direction but we do not want to do a round, its blocked also.")
+        else:
+            block_counter += 1
+            direction_result = current_direction
+            log.info("Character stuck. Trying again " + str(direction_result))
+
+    last_moves.append((direction_result,block_counter,changed, new_terain))
+    #cv.imshow("Cleared Map", np.hstack([minimap, old_minimap]))
+    #cv.waitKey(0)
+
+    log.info("Finding new direction end")
+    return direction_result, block_counter, changed, last_moves
+
+# MAP_TRAVELER
+def find_new_direction2(current_direction, minimap, old_minimap, last_moves):
+    # Define main factors - character blocked comparing to last move, wall on forward and wall on left (no new terain to go)
+    character_blocked = get_map_difference(old_minimap, minimap) < 1000
+    forward_terain = check_direction(minimap, current_direction)
+    forward_wall = check_direction(minimap, current_direction, type="wall")
+    left_terain = check_direction(minimap, current_direction, turn="left")
+    left_wall = check_direction(minimap, current_direction, turn="left", type="wall")
+
+    turned_right = turned_left = False
+
+    if forward_wall and not forward_terain and left_wall and not left_terain and character_blocked:
+        direction_result = direction_numbers[(direction_numbers.index(current_direction) + 1) % 4]
+        turned_right = True
+    elif character_blocked and len(last_moves) > 0 and last_moves[-1][3] == True and last_moves[-1][1] == False:
+        direction_result = direction_numbers[(direction_numbers.index(current_direction) + 1) % 4]
+        turned_right = True
+    elif left_terain and sum(map(lambda x: x[2] == True, last_moves[-2:])) == 0 and sum(map(lambda x: x[4] == True, last_moves[-5:])) < 5:
+        direction_result = direction_numbers[(direction_numbers.index(current_direction) - 1) % 4]
+        turned_left = True
+    else:
+        direction_result = current_direction
+
+
+    last_moves.append((direction_result, turned_right, turned_left, character_blocked, left_terain))
+    return direction_result, last_moves
+
+# MAPPER - done
+def get_entrance_location(known_entrance, minimap):
+    log.debug("Checking entrance")
+    #result = get_object_location_by_color(minimap, [220, 62, 139],[235, 101, 223], filter=True)
+    #result = get_object_location_by_color(minimap, [122, 44, 97],[177, 70, 173], filter=False)
+    result = get_object_location_by_color(minimap, [149, 41, 98], [235, 101, 223], filter=True)
+
+    if known_entrance is not None and result != (None,None):
+        new_entrance = get_meph_entrance_image(minimap)
+        if new_entrance.shape != known_entrance.shape:
+            return (None ,None)
+        entrance_diff_image = cv.bitwise_and(new_entrance, cv.bitwise_not(known_entrance))
+        entrance_diff = cv.findNonZero(entrance_diff_image)
+        if entrance_diff is None:
+            entrance_diff = 0
+        else:
+            entrance_diff = len(entrance_diff)
+        log.visual(VisualRecord(("Entrance difference is: {}".format(entrance_diff)), [result, known_entrance], fmt="png"))
+        log.debug("entrance diff: " + str(entrance_diff))
+        # cv.imshow("new_entrance", np.hstack([entrance_diff_image]))
+        # cv.waitKey()
+        if entrance_diff < 800:
+            return (None, None)
+
+    return result
+
+# MAPPER - done
+def get_meph_entrance_image(minimap):
+    meph_map_masked, meph_map_target = get_meph_map(minimap, mode="full")
+    entrance_location = get_entrance_location(None,minimap)
+    entrance_image = meph_map_masked[entrance_location[1]-80:entrance_location[1]+80,entrance_location[0]-80:entrance_location[0]+80]
+    return entrance_image
+
+# MAP_TRAVELER
+def goto_entrance():
+    log.info("Going to located entrance")
+    timeout_counter = 0
+    while True:
+        minimap = get_screen(part=MINIMAP_REGION)
+        char_location = get_char_location(minimap)
+        old_map = get_easy_map(minimap,char_location) # REPLACE BY SOMETHING NEW
+
+        if timeout_counter > 20:
+            log.error("Timeout when going to entrance.")
+            return False, None
+
+        # Check entrance possition
+        entrance_location = get_entrance_location(None, minimap)
+        if entrance_location == (None,None):
+            timeout_counter += 1
+            sleep(0.3)
+            log.warning("Cannot find entrance location nr " + str(timeout_counter))
+            continue
+
+        log.info("Character location: {} Entrance location: {}".format(char_location,entrance_location))
+
+        # Go to entrance possition
+        entrance_x, entrance_y = entrance_location
+        char_x, char_y = char_location
+        if abs(entrance_x - char_x) > 40 or abs(entrance_y - char_y) > 40:
+            tele_location = get_tele_location(char_location, entrance_location)
+            click(tele_location, button='right')
+            time.sleep(0.7)
+            minimap = get_screen(part=MINIMAP_REGION)
+            new_map = get_easy_map(minimap, char_location) # REPLACE BY SOMETHING NEW
+            if timeout_counter > 5:
+                random_on_lock(old_map, new_map) # REPLACE BY SOMETHING NEW
+
+        # if its close enough then try to find click location
+        else:
+            sleep(1)
+            if hover_destination(([149, 41, 98],[235, 101, 223]), "images/dur.png"):
+                log.info("Entrance hovered")
+                if exists("images/3.png",threshold=0.9):
+                    log.info("Entering entrance")
+                    pyag.click()
+                else:
+                    log.warning("Wrong entrance found.")
+                    return False, get_meph_entrance_image(minimap)
+
+                if exists("images/indurance3.png", 5, region=(2162,109,386,39),threshold=0.9):
+                    log.info("Destination entered correctly.")
+                    return True, None
+                else:
+                    log.info("Failed to enter durance level 3.")
+                    return False, None
+            else:
+                log.error("Cannot find durance description of entrance")
+        timeout_counter += 1
+
+
+# TASKER
+def find_meph_level():
+    log.info("Find meph tele direction.")
+    sleep(3)
+    pyag.press(TELEPORT_KEY)
+    teleport_to("tl", 600)
+    teleport_to("dr", 600)
+    teleport_to("dr", 600)
+    teleport_to("tl", 600)
+    teleport_to("tr", 600)
+    teleport_to("dl", 600)
+    teleport_to("dl", 600)
+    teleport_to("tr", 600)
+
+
+    # for i in range(1,10):
+    #     screenshot_name = "images/map_" + str(i) + ".png"
+    #     minimap = get_screen(part=MINIMAP_REGION, png=screenshot_name)
+    #     meph_map_masked, meph_map_target = get_meph_map(minimap,mode="shore")
+    #     start_direction = get_meph_start_direction(meph_map_masked, minimap)
+    #     log.info("Start direction of " + str(screenshot_name) + " is " + start_direction)
+    #get_out_direction(meph_map_target,meph_map_mask,char_possition)
+
+    minimap = get_screen(part=MINIMAP_REGION)
+    log.info(str(get_char_location(minimap)))
+    meph_map_masked, meph_map_target = get_meph_map(minimap,mode="shore")
+    start_direction = get_meph_start_direction(meph_map_masked, minimap)
+    log.info("Start direction is " + start_direction)
+
+    meph_map_masked, meph_map_target = get_meph_map(minimap, mode="full")
+    current_direction = start_direction
+    tele_number = 0
+    blocked = 0
+    changed = 0
+    last_moves = []
+    known_entrance = None
+    while True:
+        tele_number += 1
+        log.debug("Start teleporting number " + str(tele_number))
+        log.info("Last moves: " + str(last_moves[-30:]))
+
+        # Check if character stuck in loop
+        last10 = last_moves[-10:]
+        last50 = last_moves[-50:]
+        if len([last10 for idx in range(len(last50)) if last50[idx : idx + len(last50)] == last10]) > 3:
+            log.error("Character stuck. Trying some random teleports.")
+
+        if tele_number >= 1000:
+            log.error("Timout when teleporting.")
+            raise GameError("Timout when teleporting.")
+
+        #teleport_to(current_direction,800,sleep_time=0.15)
+        teleport_to(current_direction,600,sleep_time=0.3,mode="continous")
+        sleep(0.18)
+
+        old_minimap, old_meph_map_masked, old_meph_map_target = minimap, meph_map_masked, meph_map_target
+        log.debug("Getting new minimap")
+        minimap = get_screen(part=MINIMAP_REGION)
+        log.visual(
+        VisualRecord("New minimap", [minimap], fmt="png"))
+        log.debug("Minimap transformation")
+        meph_map_masked, meph_map_target = get_meph_map(minimap, mode="full")
+
+        if get_entrance_location(known_entrance, minimap) != (None,None):
+            entrance_result, known_entrance = goto_entrance()
+            if entrance_result == True:
+                log.info("Mephisto level found.")
+                break
+        else:
+            #current_direction, blocked, changed, last_moves = find_new_direction(current_direction, meph_map_masked, old_meph_map_masked, blocked, changed, last_moves)
+            current_direction, last_moves = find_new_direction2(current_direction, meph_map_masked, old_meph_map_masked, last_moves)
+
+# TASKER
+def meph_bait():
+    sleep(0.3)
+    go_to_destination(([170, 39, 82],[186, 75, 175]),(-85,-40),filter=True, accepted_distance=10, button="right")
+    # sleep(0.7)
+    # go_to_destination(([170, 39, 82], [186, 75, 175]), (-120, -60), filter=True, accepted_distance=10)
+    # sleep(0.7)
+    # go_to_destination(([170, 39, 82], [186, 75, 175]), (-85, -40), filter=True, accepted_distance=10)
+    sleep(0.7)
+    go_to_destination(([170, 39, 82], [186, 75, 175]), (-85, 0), filter=True, accepted_distance=10)
+    sleep(0.7)
+    go_to_destination(([170, 39, 82], [186, 75, 175]), (-50, 30), filter=True, accepted_distance=10, button="right")
+    sleep(1)
+    go_to_destination(([170, 39, 82], [186, 75, 175]), (-48, 50), filter=True, accepted_distance=7, move_sleep=0.7,move_step=(60,100))
+
+# TASKER
+def go_to_mephisto():
+    for i in range(1,9):
+        teleport_to("tl", 800, sleep_time=0.3,offset=(0,450))
+    meph_bait()
+
+def kill_mephisto():
 
 ####### TESTS
+
 
 def hover_test(image,special_shift):
     diff_location_x, diff_location_y = get_diff_from_destination(image)
@@ -1100,6 +1763,74 @@ def hover_test(image,special_shift):
     special_shift_x, special_shift_y = special_shift
     checking_location = (center_x + (diff_location_x * 15) + special_shift_x, center_y + (diff_location_y * 16)+ special_shift_y)
     hover(checking_location)
+
+
+### MAP STICHING TEST
+def map_stiching():
+    sleep(3)
+    minimaps = []
+    for i in range(1,5):
+        log.info("Stiching minimap nr " + str(i))
+        minimap = get_screen(part=MINIMAP_REGION)
+        meph_map_masked, meph_map_target = get_meph_map(minimap, mode="full")
+        meph_map_masked = cv.cvtColor(meph_map_masked,cv.COLOR_GRAY2RGB)
+        minimaps.append(meph_map_masked)
+        sleep(2)
+
+    sticher = cv.Stitcher_create()
+    status,full_map = sticher.stitch(minimaps)
+    cv.imshow("stitched map", full_map)
+    cv.imshow("all maps", np.hstack(minimaps))
+    cv.waitKey()
+
+
+# Image clasifier
+#from vision import Vision
+#from time import time
+#from windowcapture import WindowCapture
+# def image_clasifier():
+#     # load the trained model
+#     cascade_limestone = cv.CascadeClassifier('meph.xml')
+#     # load an empty Vision class
+#     vision_limestone = Vision(None)
+#
+#     # initialize the WindowCapture class
+#     wincap = WindowCapture('Albion Online Client')
+#
+#     loop_time = time()
+#     while(True):
+#
+#         # get an updated image of the game
+#         screenshot = wincap.get_screenshot()
+#
+#         # do object detection
+#         #rectangles = cascade_limestone.detectMultiScale(screenshot)
+#
+#         # draw the detection results onto the original image
+#         #detection_image = vision_limestone.draw_rectangles(screenshot, rectangles)
+#
+#         # display the images
+#         cv.imshow('Unprocessed', screenshot)
+#
+#         # debug the loop rate
+#         print('FPS {}'.format(1 / (time() - loop_time)))
+#         loop_time = time()
+#
+#         # press 'q' with the output window focused to exit.
+#         # press 'f' to save screenshot as a positive image, press 'd' to
+#         # save as a negative image.
+#         # waits 1 ms every loop to process key presses
+#         key = cv.waitKey(1)
+#         if key == ord('q'):
+#             cv.destroyAllWindows()
+#             break
+#         elif key == ord('f'):
+#             cv.imwrite('positive/{}.jpg'.format(loop_time), screenshot)
+#         elif key == ord('d'):
+#             cv.imwrite('negative/{}.jpg'.format(loop_time), screenshot)
+#
+#     print('Done.')
+
 
 # Login
 # Select character
@@ -1129,7 +1860,114 @@ def hover_test(image,special_shift):
 # Do not find in correct time (100 seconds timeout) -20
 # Die -30
 
-sleep(2)
+# get_pixels("images/entrance_colors6.png")
+# exit(0)
+#colors_checker()
+#while True:
+#    minimap = get_screen(part=MINIMAP_REGION)
+
+#sleep(2)
+minimap = get_screen(part=MINIMAP_REGION)
+meph_map_masked, meph_map_target = get_meph_map(minimap, mode="full")
+# get_entrance_location(None, minimap)
+# exit(0)
+#find_new_terain(meph_map_masked, "tl")
+#check_direction(meph_map_masked, "dr",  type="wall")
+#find_line(meph_map_masked, direction="tl", type="terain")
+find_meph_level()
+go_to_mephisto()
+#meph_bait()
+#image_clasifier()
+exit(0)
+
+#find_external_points(minimap)
+# exit(0)
+
+# contours, hierarchy = cv.findContours(meph_map_masked, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+# meph_map_masked = cv.cvtColor(meph_map_masked, cv.COLOR_GRAY2BGR)
+# m1 = meph_map_masked.copy()
+# m2 = meph_map_masked.copy()
+# cv.drawContours(m1, contours, -1, (0,255,0), 5)
+# cv.drawContours(m2, contours, -3, (0,255,0), 5)
+# cv.imshow("Cleared Map", np.hstack([meph_map_masked, m1, m2]))
+# cv.waitKey(0)
+
+
+
+
+# Copy edges to the images that will display the results in BGR
+# map_lined = cv.cvtColor(meph_map_masked, cv.COLOR_GRAY2BGR)
+# map_lined_normal = map_lined.copy()
+#
+# map_blured = cv.GaussianBlur(map_lined_normal,(9,9),0)
+#
+# thresh, map_blured = cv.threshold(map_blured,50,255,cv.THRESH_BINARY)
+# map_blured_gray = cv.cvtColor(map_blured, cv.COLOR_BGR2GRAY)
+#
+# cnts = cv.findContours(map_blured_gray.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+# cnts = imutils.grab_contours(cnts)
+# log.info(str(cnts))
+# c = max(cnts, key=cv.contourArea)
+# extLeft = tuple(c[c[:, :, 0].argmin()][0])
+# extRight = tuple(c[c[:, :, 0].argmax()][0])
+# extTop = tuple(c[c[:, :, 1].argmin()][0])
+# extBot = tuple(c[c[:, :, 1].argmax()][0])
+# cv.drawContours(map_blured, [c], -1, (0, 255, 255), 2)
+# cv.circle(map_blured, extLeft, 8, (0, 0, 255), -1)
+# cv.circle(map_blured, extRight, 8, (0, 255, 0), -1)
+# cv.circle(map_blured, extTop, 8, (255, 0, 0), -1)
+# cv.circle(map_blured, extBot, 8, (255, 255, 0), -1)
+
+#map_blured = cv.cvtColor(map_blured, cv.COLOR_GRAY2BGR)
+
+#map_canny = cv.Canny(map_blured, 30, 300, None, 3)
+
+# def change_bar(val):
+#     map_blured = cv.GaussianBlur(map_lined_normal, (val, val), 0)
+#     cv.imshow("window_name", map_blured)
+#
+# cv.imshow("window_name", map_blured)
+# cv.createTrackbar('blur', "window_name", 0, 500, change_bar)
+# cv.waitKey(0)
+
+# lines = cv.HoughLines(map_canny, 1, np.pi / 180, 150, None, 0, 0)
+#
+# if lines is not None:
+#     for i in range(0, len(lines)):
+#         rho = lines[i][0][0]
+#         theta = lines[i][0][1]
+#         a = math.cos(theta)
+#         b = math.sin(theta)
+#         x0 = a * rho
+#         y0 = b * rho
+#         pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
+#         pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
+#         cv.line(map_lined_normal, pt1, pt2, (0, 0, 255), 3, cv.LINE_AA)
+
+# linesP = cv.HoughLinesP(meph_map_masked, 1, np.pi / 180, 10, None, 10, 10)
+#
+# if linesP is not None:
+#     for i in range(0, len(linesP)):
+#         l = linesP[i][0]
+#         cv.line(map_lined, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 3, cv.LINE_AA)
+#
+#
+# def change_bar(val):
+#     meph_map_masked_copy = meph_map_masked.copy()
+#     linesP = cv.HoughLinesP(meph_map_masked_copy, 1, np.pi / 180, 35, None, 20, 10)
+#     map_lined_copy = map_lined_normal.copy()
+#     meph_map_masked_copy = cv.cvtColor(meph_map_masked_copy, cv.COLOR_GRAY2BGR)
+#     if linesP is not None:
+#         for i in range(0, len(linesP)):
+#             l = linesP[i][0]
+#             cv.line(meph_map_masked_copy, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 3, cv.LINE_AA)
+#             log.info("Line number " + str(i) + str(l))
+#     cv.imshow(window_name, meph_map_masked_copy)
+#
+# window_name = "map"
+# cv.imshow(window_name, map_lined)
+# cv.createTrackbar('min', window_name, 0, 500, change_bar)
+# cv.waitKey(0)
 
 # Vars initialization
 game_number = 0
@@ -1156,6 +1994,7 @@ ignored_items_list = []
 #game_restore()
 # exit(0)
 
+# LOOT COLLECTOR
 good_items = {}
 # Load items lists
 for item_rarity in ["unique","set","rune","magic"]:
@@ -1165,11 +2004,13 @@ for item_rarity in ["unique","set","rune","magic"]:
         log.info("Item rarity {}:".format(item_rarity))
         log.info(good_items[item_rarity])
 
+# D2CV
 # Main loop
 while game_number < games_max:
     try:
         game_number += 1
         potioner_thread = None
+        # STATISTICS
         log.info("")
         log.info("---------------------------------------------------------------------")
         log.info("Starting game number " + str(game_number) + ". Current number of issues: " + str(issues_counter))
@@ -1220,6 +2061,7 @@ while game_number < games_max:
             exit_game()
             game_time_stop = datetime.datetime.now()
             game_time = game_time_stop - game_time_start
+            sleep(95 - game_time.total_seconds())
             log.info("Game took: " + str(game_time.seconds))
             continue
     except Exception as e:

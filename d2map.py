@@ -19,7 +19,7 @@ rng.seed(12345)
 user32 = ctypes.windll.user32
 screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
 
-# DIRECTIONER
+# DIRECTIONER - DONE
 move_directions = {
     "t" : (1300, 10),
     "d" : (1300, 1100),
@@ -45,7 +45,7 @@ move_directions = {
 
 direction_numbers = ["tl","tr","dr","dl"]
 
-# DIRECTIONER
+# ABADONED
 def direction_resolver(direction,resolution):
     resolution_x, resolution_y = resolution
     move_directions = {
@@ -61,7 +61,7 @@ def direction_resolver(direction,resolution):
     }
     return move_directions[direction]
 
-### ABADONED
+### DONE
 def get_contours(gray_image,val):
     threshold = val
     # Detect edges using Canny
@@ -186,7 +186,7 @@ def get_easy_map(map, char_location):
     return final_map
 
 
-# DIRECTIONER
+# DIRECTIONER DONE
 def get_tele_location(current_loc,destination_loc):
     global tele_loc
     log.info("screensize: " + str(screensize))

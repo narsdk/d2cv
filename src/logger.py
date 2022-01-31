@@ -4,6 +4,11 @@ import os
 from vlogging import VisualRecord
 
 
+class GameError(Exception):
+    def __init__(self,*args,**kwargs):
+        Exception.__init__(self,*args,**kwargs)
+
+
 # Improve RotateExtensionLogs class - add possibility to include file extension to log file name
 class RotateExtensionLogs(log.handlers.RotatingFileHandler):
     def __init__(self, filename, mode='a', maxBytes=0, backupCount=0, encoding=None, delay=False, file_extension=""):

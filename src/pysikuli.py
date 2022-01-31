@@ -115,8 +115,10 @@ class Region:
         else:
             return 0
 
-    def click(self, dest, threshold=0.7, button='left', update=True):
-        if self.hover(dest, threshold, update):
+    def click(self, dest=None, threshold=0.7, button='left', update=True):
+        if dest is None:
+            pyag.click(button=button)
+        elif self.hover(dest, threshold, update):
             pyag.click(button=button)
         else:
             return 0

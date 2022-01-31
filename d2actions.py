@@ -218,7 +218,7 @@ def drink_potion(type):
     elif type == "mana":
         pyag.press(str(random.randint(3,4)))
 
-# TO REPLACE IN MAPTRAVELER
+# ABADONED AND REPLACED - DONE
 # Random tele or move on lock
 def random_on_lock(old_map, new_map, button = "right"):
     map_diff = get_map_difference(old_map, new_map)
@@ -495,7 +495,7 @@ def get_move_location(diff_location_x,diff_location_y,distance_step):
 
     return result_x,result_y
 
-# MAP TRAVELER
+# MAP TRAVELER - DONE
 def get_char_location(minimap):
     char_location = (None,None)
     fail_counter = 0
@@ -513,7 +513,7 @@ def get_char_location(minimap):
     return char_location
 
 
-# DIRECTIONER
+# MAP TRAVELER - DONE
 # return vector of distance of character from destination point on minimap
 # destination can be an image patch or colors range in touple
 def get_diff_from_destination(destination, shift=None,filter=False):
@@ -608,7 +608,7 @@ def enter_destination(destination,hover_image,final_image,dest_shift=None,specia
                 log.debug("Destination entered correctly.")
                 return True
 
-# CHARACTER
+# CHARACTER - move to
 def hover_destination(destination,hover_image,dest_shift=None,special_shift=None):
     hover_destination_timeout = 0
     while True:
@@ -649,7 +649,7 @@ def hover_destination(destination,hover_image,dest_shift=None,special_shift=None
                 log.info("Found {} on location {}".format(hover_image,checking_location))
                 return True
 
-# TASKER
+# TASKS - DONE
 def go_to_anya():
     log.info("Going to anya start")
     go_to_destination("images/anya.png", (100, 40))
@@ -657,7 +657,7 @@ def go_to_anya():
     sleep(0.3)
     enter_destination(([0, 239, 239],[0, 243, 243]), "images/nihlak_portal.png","images/ingame.png",special_shift=(-60,0))
 
-# TASKER
+# TASKS
 def tele_to_pindle():
     log.info("Teleporting to pindle start.")
     tele_timeout = 0
@@ -679,7 +679,7 @@ def tele_to_pindle():
             raise GameError("Timeout when teleporting to pindle.")
 
         diff_location_x, diff_location_y = get_diff_from_destination(([18, 160, 184], [45, 184, 185]))
-        if diff_location_x == None or diff_location_x > 3 or diff_location_y < -3:
+        if diff_location_x is None or diff_location_x > 3 or diff_location_y < -3:
             log.debug("Teleporting to pindle number " + str(tele_timeout))
             click(TELE_CLICK_LOCATION, button="right")
             sleep(0.1)
@@ -687,7 +687,7 @@ def tele_to_pindle():
             log.debug("Teleporting to pindle completed.")
             return True
 
-# TASKER
+# TASKS
 def kill_pindle():
     log.info("Killing pindle start.")
     pyag.press(ATTACK_KEY)
@@ -1066,7 +1066,7 @@ def get_meph_map(minimap,mode="full"):
 
     return full_mask,target
 
-# MAP TRAVELER
+# MAP TRAVELER - DONE
 def get_meph_start_direction(map, minimap):
     map_canny = cv.Canny(map, 50, 200, None, 3)
 
@@ -1172,7 +1172,7 @@ def teleport_to(direction,distance,sleep_time=0.25, offset=None, mode="normal"):
         pyag.mouseUp(button='right')
     log.info("Teleport end")
 
-# MAP TRAVELER
+# ABADONED
 def get_out_direction(meph_map,meph_mask,char_possition):
     _,_,minimap_res_x,minimap_res_y = MINIMAP_REGION
     for direction in move_directions:
@@ -1278,7 +1278,7 @@ def teleporter():
                 side_checker = 3
 
 
-# MAPPER
+# MAP TRAVELER - DONE
 def find_line(meph_map, direction="tl", type="terain"):
     meph_map = cv.cvtColor(meph_map, cv.COLOR_GRAY2BGR)
     map_lined_normal = meph_map.copy()
@@ -1600,7 +1600,7 @@ def get_meph_entrance_image(minimap):
     entrance_image = meph_map_masked[entrance_location[1]-80:entrance_location[1]+80,entrance_location[0]-80:entrance_location[0]+80]
     return entrance_image
 
-# MAP_TRAVELER
+# MAP_TRAVELER #TODO: SHOULD BE CHANGED TO GO_TO_DESTINATION
 def goto_entrance():
     log.info("Going to located entrance")
     timeout_counter = 0
@@ -1658,7 +1658,7 @@ def goto_entrance():
         timeout_counter += 1
 
 
-# TASKER
+# TASKS
 def find_meph_level():
     log.info("Find meph tele direction.")
     sleep(3)
@@ -1730,7 +1730,7 @@ def find_meph_level():
             #current_direction, blocked, changed, last_moves = find_new_direction(current_direction, meph_map_masked, old_meph_map_masked, blocked, changed, last_moves)
             current_direction, last_moves = find_new_direction2(current_direction, meph_map_masked, old_meph_map_masked, last_moves)
 
-# TASKER
+# TASKS
 def meph_bait():
     sleep(0.3)
     go_to_destination(([170, 39, 82],[186, 75, 175]),(-85,-40),filter=True, accepted_distance=10, button="right")
@@ -1745,7 +1745,7 @@ def meph_bait():
     sleep(1)
     go_to_destination(([170, 39, 82], [186, 75, 175]), (-48, 50), filter=True, accepted_distance=7, move_sleep=0.7,move_step=(60,100))
 
-# TASKER
+# TASKS
 def go_to_mephisto():
     for i in range(1,9):
         teleport_to("tl", 800, sleep_time=0.3,offset=(0,450))

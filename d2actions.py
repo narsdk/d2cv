@@ -478,7 +478,7 @@ def buy_potions():
         log.info("No empty potion slot find.")
         pyag.press("~")
 
-# DIRECTIONER
+# MAP TRAVELER - DONE
 def get_move_location(diff_location_x,diff_location_y,distance_step):
     distance_min, distance_max = distance_step
     log.debug("Calculating move location from diff_location_x:{},diff_location_y:{},distance_min:{},distance_max:{}".format(diff_location_x,diff_location_y,distance_min,distance_max))
@@ -546,7 +546,7 @@ def get_diff_from_destination(destination, shift=None,filter=False):
 
     return diff_location_x, diff_location_y
 
-# CHARACTER
+# CHARACTER - DONE
 def go_to_destination(destination,shift=None,move_step=(250,350),accepted_distance=20,steps_timeout=30,critical=True, filter=False, button="left",move_sleep=0):
     step = 0
     error_counter = 0
@@ -589,7 +589,7 @@ def go_to_destination(destination,shift=None,move_step=(250,350),accepted_distan
             log.info("Destination reached.")
             return True
 
-# CHARACTER
+# CHARACTER - DONE
 def enter_destination(destination,hover_image,final_image,dest_shift=None,special_shift=None):
     enter_max_attempts = 5
     enter_timeout = 0
@@ -657,7 +657,7 @@ def go_to_anya():
     sleep(0.3)
     enter_destination(([0, 239, 239],[0, 243, 243]), "images/nihlak_portal.png","images/ingame.png",special_shift=(-60,0))
 
-# TASKS
+# TASKS - DONE
 def tele_to_pindle():
     log.info("Teleporting to pindle start.")
     tele_timeout = 0
@@ -687,7 +687,7 @@ def tele_to_pindle():
             log.debug("Teleporting to pindle completed.")
             return True
 
-# TASKS
+# TASKS - DONE
 def kill_pindle():
     log.info("Killing pindle start.")
     pyag.press(ATTACK_KEY)
@@ -1152,7 +1152,7 @@ def get_meph_start_direction(map, minimap):
 
     return result
 
-# CHARACTER
+# CHARACTER - done
 def teleport_to(direction,distance,sleep_time=0.25, offset=None, mode="normal"):
     log.info("Teleport start")
     direction_location_x, direction_location_y = move_directions[direction]
@@ -1421,7 +1421,7 @@ def find_line(meph_map, direction="tl", type="terain"):
 
     return map_lined_normal, longest_line_size
 
-# MAPPER
+# MAPPER - DONE
 def check_direction(minimap, current_direction,turn=None, type="terain"):
     #character location (434, 248)
 
@@ -1473,7 +1473,7 @@ def check_direction(minimap, current_direction,turn=None, type="terain"):
         return False
 
 
-# MAP_TRAVELER
+# ABADONED
 def find_new_direction(current_direction, minimap, old_minimap, block_counter, changed, last_moves):
     log.info("Finding new direction")
 
@@ -1540,7 +1540,7 @@ def find_new_direction(current_direction, minimap, old_minimap, block_counter, c
     log.info("Finding new direction end")
     return direction_result, block_counter, changed, last_moves
 
-# MAP_TRAVELER
+# MAP_TRAVELER - DONE
 def find_new_direction2(current_direction, minimap, old_minimap, last_moves):
     # Define main factors - character blocked comparing to last move, wall on forward and wall on left (no new terain to go)
     character_blocked = get_map_difference(old_minimap, minimap) < 1000
@@ -1600,7 +1600,7 @@ def get_meph_entrance_image(minimap):
     entrance_image = meph_map_masked[entrance_location[1]-80:entrance_location[1]+80,entrance_location[0]-80:entrance_location[0]+80]
     return entrance_image
 
-# MAP_TRAVELER #TODO: SHOULD BE CHANGED TO GO_TO_DESTINATION
+# MAP_TRAVELER - DONE #TODO: SHOULD BE CHANGED TO GO_TO_DESTINATION
 def goto_entrance():
     log.info("Going to located entrance")
     timeout_counter = 0
@@ -1658,7 +1658,7 @@ def goto_entrance():
         timeout_counter += 1
 
 
-# TASKS
+# TASKS - DONE
 def find_meph_level():
     log.info("Find meph tele direction.")
     sleep(3)
@@ -1671,15 +1671,6 @@ def find_meph_level():
     teleport_to("dl", 600)
     teleport_to("dl", 600)
     teleport_to("tr", 600)
-
-
-    # for i in range(1,10):
-    #     screenshot_name = "images/map_" + str(i) + ".png"
-    #     minimap = get_screen(part=MINIMAP_REGION, png=screenshot_name)
-    #     meph_map_masked, meph_map_target = get_meph_map(minimap,mode="shore")
-    #     start_direction = get_meph_start_direction(meph_map_masked, minimap)
-    #     log.info("Start direction of " + str(screenshot_name) + " is " + start_direction)
-    #get_out_direction(meph_map_target,meph_map_mask,char_possition)
 
     minimap = get_screen(part=MINIMAP_REGION)
     log.info(str(get_char_location(minimap)))
@@ -1723,21 +1714,17 @@ def find_meph_level():
 
         if get_entrance_location(known_entrance, minimap) != (None,None):
             entrance_result, known_entrance = goto_entrance()
-            if entrance_result == True:
+            if entrance_result:
                 log.info("Mephisto level found.")
                 break
         else:
             #current_direction, blocked, changed, last_moves = find_new_direction(current_direction, meph_map_masked, old_meph_map_masked, blocked, changed, last_moves)
             current_direction, last_moves = find_new_direction2(current_direction, meph_map_masked, old_meph_map_masked, last_moves)
 
-# TASKS
+# TASKS DONE
 def meph_bait():
     sleep(0.3)
     go_to_destination(([170, 39, 82],[186, 75, 175]),(-85,-40),filter=True, accepted_distance=10, button="right")
-    # sleep(0.7)
-    # go_to_destination(([170, 39, 82], [186, 75, 175]), (-120, -60), filter=True, accepted_distance=10)
-    # sleep(0.7)
-    # go_to_destination(([170, 39, 82], [186, 75, 175]), (-85, -40), filter=True, accepted_distance=10)
     sleep(0.7)
     go_to_destination(([170, 39, 82], [186, 75, 175]), (-85, 0), filter=True, accepted_distance=10)
     sleep(0.7)
@@ -1745,13 +1732,14 @@ def meph_bait():
     sleep(1)
     go_to_destination(([170, 39, 82], [186, 75, 175]), (-48, 50), filter=True, accepted_distance=7, move_sleep=0.7,move_step=(60,100))
 
-# TASKS
+# TASKS DONE
 def go_to_mephisto():
     for i in range(1,9):
         teleport_to("tl", 800, sleep_time=0.3,offset=(0,450))
     meph_bait()
 
 def kill_mephisto():
+    pass
 
 ####### TESTS
 
@@ -1860,8 +1848,8 @@ def map_stiching():
 # Do not find in correct time (100 seconds timeout) -20
 # Die -30
 
-# get_pixels("images/entrance_colors6.png")
-# exit(0)
+get_pixels("images/entrance_colors6.png")
+exit(0)
 #colors_checker()
 #while True:
 #    minimap = get_screen(part=MINIMAP_REGION)

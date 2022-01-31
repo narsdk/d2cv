@@ -15,6 +15,7 @@ SCREENRES_X, SCREENRES_Y = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1
 pyag.PAUSE = 0.03
 MATCH_INTERVAL = 0.01
 
+
 class Region:
     """
     Class Region: contains rectangle which is a ROI of screen. It makes screenshots of ROI and do some actions
@@ -48,11 +49,13 @@ class Region:
         self.previous_screen = self.screen
         self.screen = cv.cvtColor(np.array(screen), cv.COLOR_RGB2BGR)
 
-    def compare_screens(self):
+    @staticmethod
+    def compare_screens(img1, img2):
         # Compare images
-        screens_diff = np.sum((self.previous_screen.astype("float") - self.screen.astype("float")) ** 2)
-        screens_diff /= float(self.previous_screen.shape[0] * self.previous_screen.shape[1])
-        log.debug(VisualRecord(("Difference is: {}".format(screens_diff)), [self.previous_screen, self.screen], fmt="png"))
+        screens_diff = np.sum((img2.astype("float") - img1.astype("float")) ** 2)
+        screens_diff /= float(img2.shape[0] * img2.shape[1])
+        log.debug(VisualRecord(("Difference is: {}".format(screens_diff)), [img2, img1],
+                               fmt="png"))
         return screens_diff
 
     def match(self, image, threshold=0.7, update=True):
@@ -115,7 +118,8 @@ class Region:
         else:
             return 0
 
-    def click(self, dest=None, threshold=0.7, button='left', update=True):
+    def click(self, dest, threshold=0.7, button='left', update=True):
+        log.debug("Click destination is " + str(dest))
         if dest is None:
             pyag.click(button=button)
         elif self.hover(dest, threshold, update):
@@ -129,7 +133,7 @@ class Region:
         while True:
             log.debug("Image " + str(image) + " matching nr " + str(check_number))
             match_time_start = datetime.datetime.now()
-            if self.match(image, threshold)[0] is not None:
+            if self.match(image, threshold) is not None:
                 return 1
             else:
                 match_time_stop = datetime.datetime.now()
@@ -185,11 +189,26 @@ class Region:
             gray_image = cv.morphologyEx(gray_image, cv.MORPH_OPEN, kernel)
         return gray_image
 
+    def get_color_range_mask(self, color, color2=None, mask_filter=False):
+        mask_array = np.array(color, dtype="uint8")
+        if color2 is not None:
+            mask_array2 = np.array(color2, dtype="uint8")
+        else:
+            mask_array2 = np.array(color, dtype="uint8")
+        mask = cv.inRange(self.screen, mask_array, mask_array2)
+        filtered_map = cv.bitwise_and(self.screen, self.screen, mask=mask)
+
+        # convert the image to grayscale
+        gray_image = cv.cvtColor(filtered_map, cv.COLOR_BGR2GRAY)
+        if mask_filter:
+            kernel = np.ones((3, 3), np.uint8)
+            gray_image = cv.morphologyEx(gray_image, cv.MORPH_OPEN, kernel)
+        return gray_image
+
     # Find center location of rgb color on screen
     def match_color(self, colors, mask_filter=False, method="contours"):
-        masked_screen = self.get_colored_mask(colors, mask_filter)
-
         if method == "contours":
+            masked_screen = self.get_colored_mask(colors, mask_filter)
             thresh = cv.threshold(masked_screen, 5, 255, cv.THRESH_BINARY)[1]
             cnts = cv.findContours(thresh.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
             cnts = imutils.grab_contours(cnts)
@@ -202,6 +221,8 @@ class Region:
 
             color_x, color_y = tuple(c[c[:, :, 1].argmax()][0])
         elif method == "nonzero":
+            color1, color2 = colors[0], colors[1]
+            masked_screen = self.get_color_range_mask(color1, color2, mask_filter)
             nonzero_points = cv.findNonZero(masked_screen)
             if nonzero_points is None:
                 return None

@@ -3,22 +3,22 @@ from abc import abstractmethod
 from time import sleep
 from src.config import CONFIG
 import pyautogui as pyag
+from vlogging import VisualRecord
+from character import Character
+from maptraveler import MapTraveler
 
 
 class Task:
-    def __init__(self, name, character, looter, maptraveler):
-        self.name = name
+    def __init__(self, character, looter, maptraveler):
         self.looter = looter
         self.character = character
         self.maptraveler = maptraveler
 
     def execute(self):
-        log.info("Starting task: " + self.name)
         self.pre_actions()
         self.approach()
         self.kill()
         self.post_actions()
-        log.info("Finished " + self.name)
 
     @abstractmethod
     def pre_actions(self):
@@ -36,16 +36,41 @@ class Task:
     def post_actions(self):
         pass
 
+    def goto_wp(self, waypoint):
+        pass
+
 
 class Pindelskin(Task):
     def pre_actions(self):
         pass
 
     def approach(self):
-        pass
+        self.go_to_anya()
+        self.tele_to_pindle()
 
     def kill(self):
-        pass
+        log.info("Killing pindle start.")
+        pyag.press(CONFIG["ATTACK_KEY"])
+        sleep(0.1)
+        self.maptraveler.click((1543, 575), button="right")
+        sleep(0.2)
+        pyag.press(CONFIG["ATTACK_KEY2"])
+        for i in range(1, 6):
+            self.maptraveler.click((1480, 543), button="right")
+        pyag.press(CONFIG["ATTACK_KEY"])
+        sleep(0.3)
+        self.maptraveler.click((1788, 438), button="right")
+        pyag.press(CONFIG["ATTACK_KEY2"])
+        for i in range(1, 12):
+            log.info("Attack nr " + str(i))
+            if i % 6 == 0:
+                pyag.press(CONFIG["ATTACK_KEY"])
+            if i % 2 == 0:
+                self.maptraveler.click((1480, 543), button="right")
+            elif i % 2 == 1:
+                self.maptraveler.click((1550, 613), button="right")
+            if i % 6 == 0:
+                pyag.press(CONFIG["ATTACK_KEY2"])
 
     def post_actions(self):
         pass
@@ -94,7 +119,9 @@ class Mephisto(Task):
         pass
 
     def approach(self):
-        pass
+        self.goto_wp((3, 9))
+        self.find_meph_level()
+        self.go_to_mephisto()
 
     def kill(self):
         pass
@@ -102,9 +129,88 @@ class Mephisto(Task):
     def post_actions(self):
         pass
 
+    def find_meph_level(self):
+        log.info("Find meph tele direction.")
+        sleep(3)
+        pyag.press(CONFIG["TELEPORT_KEY"])
+        self.character.teleport_to("tl", 600)
+        self.character.teleport_to("dr", 600)
+        self.character.teleport_to("dr", 600)
+        self.character.teleport_to("tl", 600)
+        self.character.teleport_to("tr", 600)
+        self.character.teleport_to("dl", 600)
+        self.character.teleport_to("dl", 600)
+        self.character.teleport_to("tr", 600)
+
+        self.maptraveler.update_screen()
+        start_direction = self.maptraveler.get_start_direction()
+        log.info("Start direction is " + start_direction)
+
+        self.maptraveler.get_map_walls(mode="full")
+
+        current_direction = start_direction
+        tele_number = 0
+        last_moves = []
+        while True:
+            tele_number += 1
+            log.debug("Start teleporting number " + str(tele_number))
+            log.info("Last moves: " + str(last_moves[-30:]))
+
+            # Check if character stuck in loop
+            last10 = last_moves[-10:]
+            last50 = last_moves[-50:]
+            if len([last10 for idx in range(len(last50)) if last50[idx: idx + len(last50)] == last10]) > 3:
+                log.error("Character stuck. Trying some random teleports.")
+
+            if tele_number >= 1000:
+                log.error("Timeout when teleporting.")
+                raise GameError("Timeout when teleporting.")
+
+            self.character.teleport_to(current_direction, 600, sleep_time=0.3, mode="continuous")
+            # sleep(0.18)
+
+            log.debug("Getting new minimap")
+            self.maptraveler.update_screen()
+            log.visual(
+                VisualRecord("New minimap", [self.maptraveler.screen], fmt="png"))
+            log.debug("Minimap transformation")
+            self.maptraveler.get_map_walls(mode="full")
+
+            if self.maptraveler.get_entrance_location() is not None:
+                entrance_result, known_entrance = self.character.goto_entrance()
+                if entrance_result:
+                    log.info("Mephisto level found.")
+                    break
+            else:
+                current_direction, last_moves = self.maptraveler.find_new_direction(current_direction, last_moves)
+
+    def meph_bait(self):
+        sleep(0.3)
+        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-85, -40), filter=True, accepted_distance=10,
+                                         button="right")
+        sleep(0.7)
+        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-85, 0), filter=True, accepted_distance=10)
+        sleep(0.7)
+        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-50, 30), filter=True, accepted_distance=10,
+                                         button="right")
+        sleep(1)
+        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-48, 50), filter=True, accepted_distance=7,
+                                         move_sleep=0.7, move_step=(60, 100))
+
+    def go_to_mephisto(self):
+        for i in range(1, 9):
+            self.character.teleport_to("tl", 800, sleep_time=0.3, offset=(0, 450))
+        self.meph_bait()
+
 
 def main():
     log.info("Tasks test")
+    # Go to act 3 meph wp and start
+    sleep(2)
+    traveler = MapTraveler()
+    character = Character(traveler)
+    task = Mephisto(character, "looter", traveler)
+    task.approach()
 
 
 if __name__ == '__main__':

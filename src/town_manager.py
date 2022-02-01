@@ -291,5 +291,5 @@ def storeitems_test():
 
 
 if __name__ == '__main__':
-    # main()
-    storeitems_test()
+    main()
+    #storeitems_test()

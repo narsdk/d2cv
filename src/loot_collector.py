@@ -7,6 +7,7 @@ import imutils
 from difflib import SequenceMatcher
 import pytesseract
 from vlogging import VisualRecord
+import re
 
 # Download and install tesseract from https://github.com/UB-Mannheim/tesseract/wiki
 pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files/Tesseract-OCR/tesseract.exe'
@@ -14,7 +15,15 @@ pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files/Tesseract-OCR/tesserac
 
 class LootCollector:
     def __init__(self):
-        pass
+        self.good_items = {}
+        # Load items lists
+        for item_rarity in ["unique", "set", "rune", "magic"]:
+            with open("items/" + item_rarity + ".txt") as file:
+                file_lines = [line.rstrip() for line in file]
+                self.good_items[item_rarity] = [re.sub(r"(\w)([A-Z])", r"\1 \2", line.split(" ")[2])
+                                                for line in file_lines if line.startswith("[Name]")]
+                log.info("Item rarity {}:".format(item_rarity))
+                log.info(self.good_items[item_rarity])
 
     @staticmethod
     def get_equipment_item():
@@ -32,13 +41,11 @@ class LootCollector:
         log.info("Found item on location: " + str(item))
         return item
 
-    @staticmethod
-    def item_classification(item_name, rarity):
-        global good_items
-        for good_item in good_items[rarity]:
-            log.info("Classification of {} compared to found item {}".format(good_item, item_name))
+    def item_classification(self, item_name, rarity):
+        for good_item in self.good_items[rarity]:
+            log.debug("Classification of {} compared to found item {}".format(good_item, item_name))
             similarity_ratio = SequenceMatcher(None, good_item.lower(), item_name.lower()).ratio()
-            log.info("Classification ratio: " + str(similarity_ratio))
+            log.debug("Classification ratio: " + str(similarity_ratio))
             if similarity_ratio > 0.8:
                 return True
         else:
@@ -47,13 +54,14 @@ class LootCollector:
     @staticmethod
     def get_item_region():
         screen = Region(*CONFIG["ITEMS_REGION"])
-        masked_screen = screen.get_colored_mask([62, 62, 62])
+        masked_screen = screen.get_colored_mask([68, 68, 68])
         thresh = cv.threshold(masked_screen, 45, 255, cv.THRESH_BINARY)[1]
         cnts = cv.findContours(thresh.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         c = max(cnts, key=cv.contourArea)
         x, y, w, h = cv.boundingRect(c)
         x = x + 1380
+        log.visual(VisualRecord("Item region", [screen, masked_screen], fmt="png"))
 
         log.debug("Found item contour: {},{},{},{}".format(x, y, w, h))
 
@@ -65,15 +73,15 @@ class LootCollector:
         item_name_region = x, y, w, 50
         item_name = Region(*item_name_region)
 
-        if item_name.match_color([CONFIG["GOLD_TEXT"]]) is not None:
+        if item_name.match_color([CONFIG["GOLD_TEXT"]], method="nonzero") is not None:
             rarity = "unique"
-        elif item_name.match_color([CONFIG["GREEN_TEXT"]]) is not None:
+        elif item_name.match_color([CONFIG["GREEN_TEXT"]], method="nonzero") is not None:
             rarity = "set"
-        elif item_name.match_color([CONFIG["ORANGE_TEXT"]]) is not None:
+        elif item_name.match_color([CONFIG["ORANGE_TEXT"]], method="nonzero") is not None:
             rarity = "rune"
-        elif item_name.match_color([CONFIG["BLUE_TEXT"]]) is not None:
+        elif item_name.match_color([CONFIG["BLUE_TEXT"]], method="nonzero") is not None:
             rarity = "magic"
-        elif item_name.match_color([CONFIG["WHITE_TEXT"]]) is not None:
+        elif item_name.match_color([CONFIG["WHITE_TEXT"]], method="nonzero") is not None:
             rarity = "normal"
         else:
             rarity = "unknown"

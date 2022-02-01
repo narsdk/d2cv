@@ -40,10 +40,10 @@ CONFIG = {
     # COLORS
     "GREEN_TEXT": [0, 255, 0],
     "WHITE_TEXT": [255, 255, 255],
-    "BLUE_TEXT": [255, 104, 104],
-    "GOLD_TEXT": [113, 175, 196],
+    "BLUE_TEXT": [255, 110, 110],
+    "GOLD_TEXT": [119, 179, 199],
     "RED_TEXT": [71, 71, 255],
-    "ORANGE_TEXT": [0, 163, 255]
+    "ORANGE_TEXT": [0, 168, 255]
 }
 
 

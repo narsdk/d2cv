@@ -22,7 +22,7 @@ class Task:
 
     @abstractmethod
     def pre_actions(self):
-        pass
+        self.use_cta()
 
     @abstractmethod
     def approach(self):
@@ -39,10 +39,29 @@ class Task:
     def goto_wp(self, waypoint):
         pass
 
+    def use_cta(self):
+        log.info("Using CTA.")
+        sleep(0.3)
+        pyag.press("w")
+        sleep(0.3)
+        pyag.press("f5")
+        sleep(0.3)
+        self.maptraveler.click(None, button="right")
+        sleep(0.3)
+        pyag.press("f6")
+        sleep(0.3)
+        self.maptraveler.click(None, button="right")
+        sleep(0.3)
+        pyag.press("f7")
+        sleep(0.3)
+        self.maptraveler.click(None, button="right")
+        sleep(0.3)
+        pyag.press("w")
+        sleep(0.3)
 
 class Pindelskin(Task):
     def pre_actions(self):
-        pass
+        super().pre_actions()
 
     def approach(self):
         self.go_to_anya()
@@ -116,7 +135,7 @@ class Pindelskin(Task):
 
 class Mephisto(Task):
     def pre_actions(self):
-        pass
+        super().pre_actions()
 
     def approach(self):
         self.goto_wp((3, 9))
@@ -131,16 +150,15 @@ class Mephisto(Task):
 
     def find_meph_level(self):
         log.info("Find meph tele direction.")
-        sleep(3)
         pyag.press(CONFIG["TELEPORT_KEY"])
-        self.character.teleport_to("tl", 600)
-        self.character.teleport_to("dr", 600)
-        self.character.teleport_to("dr", 600)
-        self.character.teleport_to("tl", 600)
-        self.character.teleport_to("tr", 600)
-        self.character.teleport_to("dl", 600)
-        self.character.teleport_to("dl", 600)
-        self.character.teleport_to("tr", 600)
+        self.character.teleport_to("tl", 600, sleep_time=0.3)
+        self.character.teleport_to("dr", 600, sleep_time=0.3)
+        self.character.teleport_to("dr", 600, sleep_time=0.3)
+        self.character.teleport_to("tl", 600, sleep_time=0.3)
+        self.character.teleport_to("tr", 600, sleep_time=0.3)
+        self.character.teleport_to("dl", 600, sleep_time=0.3)
+        self.character.teleport_to("dl", 600, sleep_time=0.3)
+        self.character.teleport_to("tr", 600, sleep_time=0.3)
 
         self.maptraveler.update_screen()
         start_direction = self.maptraveler.get_start_direction()
@@ -166,7 +184,7 @@ class Mephisto(Task):
                 log.error("Timeout when teleporting.")
                 raise GameError("Timeout when teleporting.")
 
-            self.character.teleport_to(current_direction, 600, sleep_time=0.3, mode="continuous")
+            self.character.teleport_to(current_direction, 650, sleep_time=0.3, mode="continuous")
             # sleep(0.18)
 
             log.debug("Getting new minimap")
@@ -186,16 +204,17 @@ class Mephisto(Task):
 
     def meph_bait(self):
         sleep(0.3)
-        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-85, -40), filter=True, accepted_distance=10,
-                                         button="right")
+        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-85, -40), map_filter=True,
+                                         accepted_distance=10, button="right")
         sleep(0.7)
-        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-85, 0), filter=True, accepted_distance=10)
+        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-85, 0), map_filter=True,
+                                         accepted_distance=10)
         sleep(0.7)
-        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-50, 30), filter=True, accepted_distance=10,
-                                         button="right")
+        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-50, 30), map_filter=True,
+                                         accepted_distance=10, button="right")
         sleep(1)
-        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-48, 50), filter=True, accepted_distance=7,
-                                         move_sleep=0.7, move_step=(60, 100))
+        self.character.go_to_destination(([170, 39, 82], [186, 75, 175]), (-48, 50), map_filter=True,
+                                         accepted_distance=7, move_sleep=0.7, move_step=(60, 100))
 
     def go_to_mephisto(self):
         for i in range(1, 9):
@@ -210,7 +229,7 @@ def main():
     traveler = MapTraveler()
     character = Character(traveler)
     task = Mephisto(character, "looter", traveler)
-    task.approach()
+    task.execute()
 
 
 if __name__ == '__main__':

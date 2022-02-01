@@ -238,10 +238,10 @@ class MapTraveler(Region):
         char_location = None
         fail_counter = 0
         while char_location is None:
-            char_location = self.match_color([159, 85, 21], [253, 136, 43], method="nonzero",)
+            char_location = self.match_color([[95, 51, 12], [253, 136, 39]], method="nonzero")
             if char_location is None:
                 # If character counter on minimap is under some text then color is different
-                char_location = self.match_color([193, 104, 25], [253, 136, 33], method="nonzero",)
+                char_location = self.match_color([[193, 104, 25], [253, 136, 33]], method="nonzero")
                 if char_location is None:
                     log.warning("Failed to find character.")
                     fail_counter += 1
@@ -403,7 +403,9 @@ def main():
     traveler = MapTraveler()
     traveler.update_screen()
     match_res = traveler.match_color([[149, 41, 98], [235, 101, 223]], method="nonzero", mask_filter=True)
-    log.info("Match res: " + str(match_res))
+    log.info("Matching some colors test: " + str(match_res))
+    char = traveler.get_char_location()
+    log.info("Finding character text: " + str(char))
 
 
 if __name__ == '__main__':

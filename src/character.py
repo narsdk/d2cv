@@ -51,11 +51,12 @@ class Character:
                     return False
 
             # Checking blockers
-            if Region(CONFIG["MINIMAP_REGION"]).exists("images/waypoint.png", 0.01):
+            if Region(*CONFIG["MINIMAP_REGION"]).exists("images/waypoint.png", 0.01):
                 log.warning("Waypoint image found. Closing it.")
                 pyag.press("esc")
             log.debug("waypoint checked.")
 
+            self.maptraveler.update_screen()
             diff_location_x, diff_location_y = self.maptraveler.get_diff_from_destination(destination, shift=shift,
                                                                                           map_filter=map_filter)
 

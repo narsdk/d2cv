@@ -299,7 +299,7 @@ def game_restore():
         log.info("Play exists?")
 
 
-# GAME CREATOR
+# GAME CREATOR - DONE
 # Start game
 def start_game():
     log.info("Checking if temviewer message exists.")
@@ -313,7 +313,7 @@ def start_game():
         log.error("ERROR: Cannot find game")
         raise GameError
 
-# GAME CREATOR
+# GAME CREATOR - DONE
 def create_game(difficulty):
     if exists("images/online.png"):
         log.info("Online found. clicking it.")
@@ -335,7 +335,7 @@ def create_game(difficulty):
         log.error("Failed to create a game")
         raise GameError
 
-# GAME CREATOR
+# GAME CREATOR - DONE
 def exit_game():
     log.info("Exiting game.")
     exiting_timeout = 0
@@ -608,7 +608,7 @@ def enter_destination(destination,hover_image,final_image,dest_shift=None,specia
                 log.debug("Destination entered correctly.")
                 return True
 
-# CHARACTER - move to
+# CHARACTER - DONE
 def hover_destination(destination,hover_image,dest_shift=None,special_shift=None):
     hover_destination_timeout = 0
     while True:

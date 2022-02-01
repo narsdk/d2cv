@@ -81,15 +81,15 @@ class TownManager:
             if manage_potions_timeout > 15:
                 log.debug("Timeout when clearing eq from potions.")
                 break
-            if Region(CONFIG["EQUIPMENT_REGION"]).exists("images/healing_potion.png", 0.3):
+            if Region(*CONFIG["EQUIPMENT_REGION"]).exists("images/healing_potion.png", 0.3):
                 log.debug("Moving health potion")
-                Region(CONFIG["EQUIPMENT_REGION"]).hover("images/healing_potion.png")
+                Region(*CONFIG["EQUIPMENT_REGION"]).hover("images/healing_potion.png")
                 with pyag.hold('shift'):
                     pyag.click()
                     sleep(0.1)
-            elif Region(CONFIG["EQUIPMENT_REGION"]).exists("images/mana_potion.png", 0.3):
+            elif Region(*CONFIG["EQUIPMENT_REGION"]).exists("images/mana_potion.png", 0.3):
                 log.debug("Moving mana potion")
-                Region(CONFIG["EQUIPMENT_REGION"]).hover("images/mana_potion.png")
+                Region(*CONFIG["EQUIPMENT_REGION"]).hover("images/mana_potion.png")
                 with pyag.hold('shift'):
                     pyag.click()
                     sleep(0.1)
@@ -103,7 +103,7 @@ class TownManager:
         log.debug("Store items start")
         check_equipment = False
         if CONFIG["USE_MERC"]:
-            if not Region(CONFIG["MERC_REGION"]).exists("images/merc_exists.png", 0.2):
+            if not Region(*CONFIG["MERC_REGION"]).exists("images/merc_exists.png", 0.2):
                 check_equipment = True
         pyag.press("i")
         sleep(0.1)
@@ -119,15 +119,15 @@ class TownManager:
             sleep(0.1)
 
             # Get gold from other stash bars if there are less than 100k in personal
-            if Region(CONFIG["EMPTY_GOLD_REGION"]).exists("images/emptygold.png", 0.1):
+            if Region(*CONFIG["EMPTY_GOLD_REGION"]).exists("images/emptygold.png", 0.1):
                 log.info("Not enough gold. Gathering from other stash bars.")
                 for bar_number in range(1, 3):
                     log.info("Switching stash bar to " + str(bar_number))
                     self.pysikuli.click(CONFIG["STASH_LOCATIONS"][bar_number])
                     sleep(0.1)
-                    if not Region(CONFIG["EMPTY_GOLD_REGION"]).exists("images/emptygold.png", 0.1):
+                    if not Region(*CONFIG["EMPTY_GOLD_REGION"]).exists("images/emptygold.png", 0.1):
                         log.info("Collecting gold from stash bar " + str(bar_number))
-                        Region(CONFIG["GOLD_REGION"]).click("images/windraw.png")
+                        Region(*CONFIG["GOLD_REGION"]).click("images/windraw.png")
                         sleep(0.1)
                         for i in range(1, 8):
                             pyag.press("backspace")
@@ -143,7 +143,7 @@ class TownManager:
                 sleep(0.1)
                 self.pysikuli.click(CONFIG["STASH_LOCATIONS"][0])
                 sleep(0.1)
-                Region(CONFIG["CHAR_GOLD_REGION"]).click("images/windraw.png")
+                Region(*CONFIG["CHAR_GOLD_REGION"]).click("images/windraw.png")
                 sleep(0.1)
                 pyag.press("enter")
                 sleep(0.1)
@@ -206,7 +206,7 @@ class Act3(TownManager):
     def manage_merc(self):
         if CONFIG["USE_MERC"]:
             log.debug("Manage merc start.")
-            if not Region(CONFIG["MERC_REGION"]).exists("images/merc_exists.png", 0.2):
+            if not Region(*CONFIG["MERC_REGION"]).exists("images/merc_exists.png", 0.2):
                 log.info("Merc do not found. Going to buy one.")
                 self.character.go_to_destination("images/stash.png", (-80, 35), accepted_distance=15)
                 self.character.go_to_destination("images/merc_trader.png", (0, 40))
@@ -225,26 +225,28 @@ class Act3(TownManager):
 
     def goto_shop(self):
         log.debug("Buy potions start.")
-        pyag.press("~")
-        if Region(CONFIG["POTIONS_BAR_REGION2"]).exists("images/empty_potion.png", 0.2):
+        pyag.press(CONFIG["POTION_BELT"])
+        if Region(*CONFIG["POTIONS_BAR_REGION2"]).exists("images/empty_potion.png", 0.2):
             log.info("Found some empty potion slots, going to Malah")
-            pyag.press("~")
+            pyag.press(CONFIG["POTION_BELT"])
             self.character.go_to_destination("images/malah.png", (10, 30))
             self.character.enter_destination("images/malah.png", "images/malah_destination.png", "images/trade.png",
                               special_shift=(70, 200))
 
             self.pysikuli.click("images/trade.png")
             sleep(0.5)
-            pyag.press("~")
-            while Region(CONFIG["POTIONS_HEALTH_REGION"]).exists("images/empty_potion.png", 0.3):
-                healing_potion_loc = Region(CONFIG["TRADER_REGION"]).match_color([[19, 14, 191]])
+            pyag.press(CONFIG["POTION_BELT"])
+            while Region(*CONFIG["POTIONS_HEALTH_REGION"]).exists("images/empty_potion.png", 0.3):
+                healing_potion_loc = Region(*CONFIG["TRADER_REGION"]).match_color([[0, 0, 168], [64, 62, 238]],
+                                                                                  method="nonzero")
                 self.pysikuli.click(healing_potion_loc, button="right")
                 sleep(0.2)
                 # TODO: This should be added to statistics
                 # global life_potions_bought
                 # life_potions_bought += 1
-            while Region(CONFIG["POTIONS_MANA_REGION"]).exists("images/empty_potion.png", 0.3):
-                mana_potion_loc = Region(CONFIG["TRADER_REGION"]).match_color([[173, 25, 6]])
+            while Region(*CONFIG["POTIONS_MANA_REGION"]).exists("images/empty_potion.png", 0.3):
+                mana_potion_loc = Region(*CONFIG["TRADER_REGION"]).match_color([[34, 0, 0], [72, 3, 4]],
+                                                                               method="nonzero")
                 self.pysikuli.click(mana_potion_loc, button="right")
                 sleep(0.2)
                 # TODO: This should be added to statistics
@@ -264,7 +266,7 @@ class Act3(TownManager):
             sleep(0.3)
         else:
             log.info("No empty potion slot find.")
-            pyag.press("~")
+            pyag.press(CONFIG["POTION_BELT"])
 
     def goto_stash(self):
         self.character.go_to_destination("images/stash.png", (-45, 5))
@@ -279,5 +281,15 @@ def main():
     town_manager.execute()
 
 
+def storeitems_test():
+    log.info("Town manager test")
+    sleep(2)
+    traveler = MapTraveler()
+    character = Character(traveler)
+    town_manager = Act3(character)
+    town_manager.store_items()
+
+
 if __name__ == '__main__':
-    main()
+    # main()
+    storeitems_test()

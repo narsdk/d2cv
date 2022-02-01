@@ -121,6 +121,7 @@ class Character:
                 checking_location = (center_x + (diff_location_x * 15) + shift_x + special_shift_x,
                                      center_y + (diff_location_y * 15) + shift_y + special_shift_y)
                 self.matcher.hover(checking_location)
+                sleep(0.1)
                 if self.matcher.exists(hover_image, 0.05):
                     log.info("Found {} on location {}".format(hover_image, checking_location))
                     return True
@@ -136,7 +137,7 @@ class Character:
             if enter_timeout > enter_max_attempts:
                 log.error("Timeout when entering " + str(destination))
                 raise GameError("Timeout when entering " + str(destination))
-            if self.maptraveler.hover_destination(destination, hover_image, dest_shift, special_shift):
+            if self.hover_destination(destination, hover_image, dest_shift, special_shift):
                 pyag.click()
                 sleep(1)
                 if self.matcher.exists(final_image, 5):
@@ -197,6 +198,11 @@ class Character:
 
 def main():
     log.info("Character test")
+    sleep(2)
+    traveler = MapTraveler()
+    character = Character(traveler)
+    character.enter_destination("images/malah.png", "images/malah_destination.png", "images/trade.png",
+                                special_shift=(70, 200))
 
 
 if __name__ == '__main__':

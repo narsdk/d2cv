@@ -1848,7 +1848,7 @@ def map_stiching():
 # Do not find in correct time (100 seconds timeout) -20
 # Die -30
 
-get_pixels("images/char_colors2.png")
+get_pixels("images/red.png")
 exit(0)
 #colors_checker()
 #while True:

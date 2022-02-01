@@ -1,22 +1,25 @@
-from logger import log, GameError
+from logger import log
 from pysikuli import Region
 from src.config import CONFIG
-import pyautogui as pyag
 from time import sleep
-from maptraveler import MapTraveler
-from character import Character
-from abc import abstractmethod
 import cv2 as cv
 import imutils
 from difflib import SequenceMatcher
+import pytesseract
+from vlogging import VisualRecord
+
+# Download and install tesseract from https://github.com/UB-Mannheim/tesseract/wiki
+pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files/Tesseract-OCR/tesseract.exe'
+
 
 class LootCollector:
     def __init__(self):
         pass
 
-    def get_equipment_item(self):
+    @staticmethod
+    def get_equipment_item():
         log.debug("get_equipment_item start")
-        occupied_equipment = Region(CONFIG["EQUIPMENT_REGION"]).image_mask("images/empty_equipment.png", inverted=True)
+        occupied_equipment = Region(*CONFIG["EQUIPMENT_REGION"]).image_mask("images/empty_equipment.png", inverted=True)
         cnts = cv.findContours(occupied_equipment.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         if not cnts:
@@ -29,7 +32,8 @@ class LootCollector:
         log.info("Found item on location: " + str(item))
         return item
 
-    def item_classification(self, item_name, rarity):
+    @staticmethod
+    def item_classification(item_name, rarity):
         global good_items
         for good_item in good_items[rarity]:
             log.info("Classification of {} compared to found item {}".format(good_item, item_name))
@@ -40,11 +44,11 @@ class LootCollector:
         else:
             return False
 
-    def get_item_region(self):
-        screen = get_screen(part=(1380, 0, 1142, 1440))
-        masked_screen = multimask(screen, [62, 62, 62])
-        img_gray = cv.cvtColor(masked_screen, cv.COLOR_BGR2GRAY)
-        thresh = cv.threshold(img_gray, 45, 255, cv.THRESH_BINARY)[1]
+    @staticmethod
+    def get_item_region():
+        screen = Region(*CONFIG["ITEMS_REGION"])
+        masked_screen = screen.get_colored_mask([62, 62, 62])
+        thresh = cv.threshold(masked_screen, 45, 255, cv.THRESH_BINARY)[1]
         cnts = cv.findContours(thresh.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         c = max(cnts, key=cv.contourArea)
@@ -55,31 +59,35 @@ class LootCollector:
 
         return x, y, w, h
 
-    def get_item_rarity(self, item_region):
+    @staticmethod
+    def get_item_rarity(item_region):
         x, y, w, h = item_region
         item_name_region = x, y, w, 50
+        item_name = Region(*item_name_region)
 
-        if get_color_location([GOLD_TEXT], region=item_name_region) != (None, None):
+        if item_name.match_color([CONFIG["GOLD_TEXT"]]) is not None:
             rarity = "unique"
-        elif get_color_location([GREEN_TEXT], region=item_name_region) != (None, None):
+        elif item_name.match_color([CONFIG["GREEN_TEXT"]]) is not None:
             rarity = "set"
-        elif get_color_location([ORANGE_TEXT], region=item_name_region) != (None, None):
+        elif item_name.match_color([CONFIG["ORANGE_TEXT"]]) is not None:
             rarity = "rune"
-        elif get_color_location([BLUE_TEXT], region=item_name_region) != (None, None):
+        elif item_name.match_color([CONFIG["BLUE_TEXT"]]) is not None:
             rarity = "magic"
+        elif item_name.match_color([CONFIG["WHITE_TEXT"]]) is not None:
+            rarity = "normal"
         else:
             rarity = "unknown"
         return rarity
 
-    # LOOT_COLLECTOR
-    def get_item_description(self):
-        item_region = get_item_region()
-        screen = get_screen(part=(item_region))
-        masked_screen = multimask(screen, [GREEN_TEXT, WHITE_TEXT, BLUE_TEXT, GOLD_TEXT, RED_TEXT, ORANGE_TEXT])
-        gray = cv.cvtColor(masked_screen, cv.COLOR_BGR2GRAY)
+    @staticmethod
+    def get_item_description():
+        item_region = LootCollector.get_item_region()
+        screen = Region(*item_region)
+        masked_screen = screen.get_colored_mask([CONFIG["GREEN_TEXT"], CONFIG["WHITE_TEXT"], CONFIG["BLUE_TEXT"],
+                                                 CONFIG["GOLD_TEXT"], CONFIG["RED_TEXT"], CONFIG["ORANGE_TEXT"]])
 
         # Performing OTSU threshold
-        ret, thresh1 = cv.threshold(gray, 0, 255, cv.THRESH_OTSU | cv.THRESH_BINARY_INV)
+        ret, thresh1 = cv.threshold(masked_screen, 0, 255, cv.THRESH_OTSU | cv.THRESH_BINARY_INV)
 
         # Specify structure shape and kernel size.
         # Kernel size increases or decreases the area
@@ -95,7 +103,7 @@ class LootCollector:
         contours, hierarchy = cv.findContours(dilation, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
         # Creating a copy of image
-        im2 = gray.copy()
+        im2 = masked_screen.copy()
 
         # Looping through the identified contours
         # Then rectangular part is cropped and passed on
@@ -106,7 +114,7 @@ class LootCollector:
             x, y, w, h = cv.boundingRect(cnt)
 
             # Drawing a rectangle on copied image
-            rect = cv.rectangle(im2, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv.rectangle(im2, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
             # Cropping the text block for giving input to OCR
             cropped = im2[y:y + h, x:x + w]
@@ -118,11 +126,12 @@ class LootCollector:
                 text = text.replace(c, "O")
 
         # Get item rarity
-        rarity = self.get_item_rarity(item_region)
+        rarity = LootCollector.get_item_rarity(item_region)
         log.info("Item rarity: " + str(rarity))
-
+        log.visual(VisualRecord("Rectangled", [im2], fmt="png"))
         log.debug("Full item description: " + str(text))
         return text, rarity
+
 
 def main():
     log.info("Loot collector test")

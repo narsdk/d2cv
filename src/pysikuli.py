@@ -31,9 +31,12 @@ class Region:
         self.screen = None
         self.previous_screen = None
         self.last_match = None
+        self.update_screen()
 
     # Return screenshot saved
     def get_screen(self):
+        if self.screen is None:
+            self.update_screen()
         return self.screen
 
     def get_previous_screen(self):
@@ -207,6 +210,11 @@ class Region:
 
     # Find center location of rgb color on screen
     def match_color(self, colors, mask_filter=False, method="contours"):
+        if self.screen is None:
+            self.update_screen()
+
+        log.debug("Matching color {} with method {}".format(colors, method))
+
         if method == "contours":
             masked_screen = self.get_colored_mask(colors, mask_filter)
             thresh = cv.threshold(masked_screen, 5, 255, cv.THRESH_BINARY)[1]
@@ -221,8 +229,12 @@ class Region:
 
             color_x, color_y = tuple(c[c[:, :, 1].argmax()][0])
         elif method == "nonzero":
-            color1, color2 = colors[0], colors[1]
+            if len(colors) < 2:
+                color1 = color2 = colors[0]
+            else:
+                color1, color2 = colors[0], colors[1]
             masked_screen = self.get_color_range_mask(color1, color2, mask_filter)
+            log.debug(VisualRecord("Masked screen", [masked_screen], fmt="png"))
             nonzero_points = cv.findNonZero(masked_screen)
             if nonzero_points is None:
                 return None
@@ -274,5 +286,13 @@ def main():
     log.info("White color location: " + str(white_location))
 
 
+def match_test():
+    log.info("Match test")
+    sleep(2)
+    matcher = Region()
+    matcher.match("images/malah_destination.png")
+
+
 if __name__ == '__main__':
-    main()
+    #main()
+    match_test()

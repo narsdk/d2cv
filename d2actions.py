@@ -767,7 +767,7 @@ def collect_loot():
         click(item)
         sleep(1)
 
-# LOOT_COLLECTOR
+# LOOT COLLECTOR
 def get_equipment_item():
     log.debug("get_equipment_item start")
     occupied_equipment = image_mask("images/empty_equipment.png",region=EQUPMENT_REGION,inverted=True)
@@ -785,7 +785,7 @@ def get_equipment_item():
     log.info("Found item on location: " + str(item))
     return item
 
-# LOOT_COLLECTOR
+# TOWN MANAGER
 def store_items():
     log.debug("Store items start")
     check_equipment = False
@@ -1000,7 +1000,7 @@ def get_item_description():
     log.info("Item rarity: " + str(rarity))
 
     log.debug("Full item description: " + str(text))
-    return text,rarity
+    return text, rarity
 
 # Development Util
 def get_pixels(image):

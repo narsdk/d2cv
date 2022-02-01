@@ -313,7 +313,7 @@ def get_color_location(colors,region=None):
 
 
 
-###DONE
+###DONE match_color - nonzero
 def get_object_location_by_color(map, color, color2=None, filter=False):
     log.debug("Checking color {} possition on minimap.".format(color))
     gray_image = get_colored_mask(map, color, color2, filter)

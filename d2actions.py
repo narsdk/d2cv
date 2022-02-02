@@ -354,7 +354,7 @@ def exit_game():
         click("images/save_and_exit.png")
         sleep(5)
 
-# TOWN MANAGEMENT
+# TOWN MANAGEMENT - DONE
 def pre_game_actions():
     log.debug("Pre game actions.")
     # Activate minimap
@@ -375,7 +375,7 @@ def pre_game_actions():
     sleep(0.2)
     manage_potions()
 
-# TOWN MANAGEMENT
+# TOWN MANAGEMENT - DONE
 def pickup_corpse():
     log.debug("Pickup corpse start.")
     minimap = get_screen(part=MINIMAP_REGION)
@@ -390,7 +390,7 @@ def pickup_corpse():
     else:
         log.debug("Corpse not found.")
 
-# TOWN MANAGEMENT
+# TOWN MANAGEMENT - DONE
 def manage_potions():
     log.debug("Start manage potions.")
     pyag.press("i")
@@ -419,7 +419,7 @@ def manage_potions():
 
     pyag.press("i")
 
-# TOWN MANAGEMENT
+# TOWN MANAGEMENT - DONE
 def manage_merc():
     log.debug("Manage merc start.")
     if not exists("images/merc_exists.png",0.2,region=MERC_REGION):
@@ -437,7 +437,7 @@ def manage_merc():
             go_to_destination("images/merc_trader.png", (80, 50))
         go_to_destination("images/stash.png", (-80, 35), accepted_distance=15)
 
-# TOWN MANAGEMENT
+# TOWN MANAGEMENT - DONE
 def buy_potions():
     log.debug("Buy potions start.")
     pyag.press("~")
@@ -712,7 +712,7 @@ def kill_pindle():
         if i % 6 == 0:
             pyag.press(ATTACK_KEY2)
 
-# LOOT_COLLECTOR
+# PICKIT
 def collect_loot():
     log.debug("Collect loot start")
     rune_color = (0, 163, 255)
@@ -767,7 +767,7 @@ def collect_loot():
         click(item)
         sleep(1)
 
-# LOOT COLLECTOR
+# LOOT COLLECTOR - DONE
 def get_equipment_item():
     log.debug("get_equipment_item start")
     occupied_equipment = image_mask("images/empty_equipment.png",region=EQUPMENT_REGION,inverted=True)
@@ -785,7 +785,7 @@ def get_equipment_item():
     log.info("Found item on location: " + str(item))
     return item
 
-# TOWN MANAGER
+# TOWN MANAGER DONE
 def store_items():
     log.debug("Store items start")
     check_equipment = False
@@ -886,7 +886,7 @@ def store_items():
     else:
         pyag.press("i")
 
-# LOOT_COLLECTOR
+# LOOT_COLLECTOR - DONE
 def item_classification(item_name,rarity):
     global good_items
     for good_item in good_items[rarity]:
@@ -898,7 +898,7 @@ def item_classification(item_name,rarity):
     else:
         return False
 
-# LOOT_COLLECTOR
+# LOOT_COLLECTOR - DONE
 def get_item_region():
     screen = get_screen(part=(1380,0,1142,1440))
     masked_screen = multimask(screen, [62,62,62])
@@ -926,7 +926,7 @@ def get_item_region():
 
     return x, y, w, h
 
-# LOOT_COLLECTOR
+# LOOT_COLLECTOR - DONE
 def get_item_rarity(item_region):
     x,y,w,h = item_region
     item_name_region = x,y,w,50
@@ -943,7 +943,7 @@ def get_item_rarity(item_region):
         rarity = "unknown"
     return rarity
 
-# LOOT_COLLECTOR
+# LOOT_COLLECTOR - DONE
 def get_item_description():
     item_region = get_item_region()
     screen = get_screen(part=(item_region))
@@ -1982,7 +1982,7 @@ ignored_items_list = []
 #game_restore()
 # exit(0)
 
-# LOOT COLLECTOR
+# LOOT COLLECTOR - DONE
 good_items = {}
 # Load items lists
 for item_rarity in ["unique","set","rune","magic"]:

@@ -36,9 +36,11 @@ CONFIG = {
     "STASH_BARS_REGION": (212, 247, 664, 53),
     "STASH_LOCATIONS": [(296, 271), (460, 271), (626, 268), (794, 266)],
     "TV_REGION": (1027, 603, 507, 187),
+    "LOOT_REGION": (600, 150, 1700, 850),
 
     # COLORS
     "GREEN_TEXT": [0, 255, 0],
+    "GREEN_TEXT2": [0, 252, 0],
     "WHITE_TEXT": [255, 255, 255],
     "BLUE_TEXT": [255, 110, 110],
     "GOLD_TEXT": [119, 179, 199],

@@ -188,7 +188,7 @@ class Region:
         # convert the image to grayscale
         gray_image = cv.cvtColor(output, cv.COLOR_BGR2GRAY)
         if mask_filter:
-            kernel = np.ones((3, 3), np.uint8)
+            kernel = np.ones((2, 2), np.uint8)
             gray_image = cv.morphologyEx(gray_image, cv.MORPH_OPEN, kernel)
         return gray_image
 

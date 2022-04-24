@@ -41,7 +41,7 @@ class Character:
         log.info("Going to destination " + str(destination))
         while True:
             step += 1
-            log.debug("Started moving loop nr " + str(step))
+            log.info("Started moving loop nr " + str(step))
             if step > steps_timeout:
                 log.error("Timeout when going to " + str(destination))
                 if critical:
@@ -49,19 +49,17 @@ class Character:
                 else:
                     log.warning("This is not critical.")
                     return False
-
             # Checking blockers
             if Region(*CONFIG["MINIMAP_REGION"]).exists("images/waypoint.png", 0.01):
                 log.warning("Waypoint image found. Closing it.")
                 pyag.press("esc")
-            log.debug("waypoint checked.")
+            log.info("Waypoint checked.")
 
             self.maptraveler.update_screen()
-            diff_location_x, diff_location_y = self.maptraveler.get_diff_from_destination(destination, shift=shift,
-                                                                                          map_filter=map_filter)
-
+            diff_location = self.maptraveler.get_diff_from_destination(destination, shift=shift,
+                                                                       map_filter=map_filter)
             # Error counter is used to do not fail function if we do not detect image in single iteration.
-            if diff_location_x is None:
+            if diff_location is None:
                 log.warning("Cannot find destination.")
                 sleep(0.2)
                 if error_counter == 30:
@@ -69,8 +67,10 @@ class Character:
                 else:
                     error_counter += 1
                     continue
-            error_counter = 0
+            else:
+                diff_location_x, diff_location_y = diff_location
 
+            error_counter = 0
             if abs(diff_location_x) > accepted_distance or abs(diff_location_y) > accepted_distance:
                 move_location = MapTraveler.get_move_location(diff_location_x, diff_location_y, move_step)
                 self.matcher.click(move_location, button=button)
@@ -95,9 +95,10 @@ class Character:
                     raise GameError("Timeout when hovering destination" + str(destination))
 
                 log.debug("Trying to find location nr " + str(find_map_destination_timeout))
-                diff_location_x, diff_location_y = self.maptraveler.get_diff_from_destination(destination,
-                                                                                              shift=dest_shift)
-                if diff_location_x is not None and diff_location_y is not None:
+                diff_location = self.maptraveler.get_diff_from_destination(destination,
+                                                                           shift=dest_shift)
+                if diff_location is not None:
+                    diff_location_x, diff_location_y = diff_location
                     break
 
             center_x, center_y = CONFIG["CENTER_LOCATION"]
@@ -138,11 +139,14 @@ class Character:
                 log.error("Timeout when entering " + str(destination))
                 raise GameError("Timeout when entering " + str(destination))
             if self.hover_destination(destination, hover_image, dest_shift, special_shift):
+                log.info("Destination found.")
                 pyag.click()
                 sleep(1)
-                if self.matcher.exists(final_image, 5):
-                    log.debug("Destination entered correctly.")
+                if Region().exists(final_image, 5):
+                    log.info("Destination entered correctly.")
                     return True
+                else:
+                    log.warning("Failed to enter destination.")
 
     def goto_entrance(self):
         log.info("Going to located entrance")

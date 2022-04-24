@@ -19,3 +19,4 @@ PyTweening==1.0.3
 six==1.16.0
 
 keyboard~=0.13.5
+d3dshot~=0.1.5

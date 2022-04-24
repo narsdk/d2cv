@@ -54,6 +54,7 @@ class LootCollector:
     @staticmethod
     def get_item_region():
         screen = Region(*CONFIG["ITEMS_REGION"])
+        screen.update_screen()
         masked_screen = screen.get_colored_mask([68, 68, 68])
         thresh = cv.threshold(masked_screen, 45, 255, cv.THRESH_BINARY)[1]
         cnts = cv.findContours(thresh.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -91,6 +92,7 @@ class LootCollector:
     def get_item_description():
         item_region = LootCollector.get_item_region()
         screen = Region(*item_region)
+        screen.update_screen()
         masked_screen = screen.get_colored_mask([CONFIG["GREEN_TEXT"], CONFIG["WHITE_TEXT"], CONFIG["BLUE_TEXT"],
                                                  CONFIG["GOLD_TEXT"], CONFIG["RED_TEXT"], CONFIG["ORANGE_TEXT"]])
 

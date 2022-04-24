@@ -28,6 +28,10 @@ class TownManager:
     def goto_stash(self):
         pass
 
+    @abstractmethod
+    def goto_wp(self):
+        pass
+
     def execute(self):
         self.pre_game_actions()
         self.goto_shop()
@@ -173,7 +177,7 @@ class TownManager:
                     self.pysikuli.click(CONFIG["STASH_LOCATIONS"][current_stash])
                 else:
                     self.pysikuli.hover(item_to_store)
-                    sleep(0.1)
+                    sleep(0.2)
                     found_item_description, rarity = self.loot_collector.get_item_description()
                     log.info("Item description: " + str(found_item_description))
                     item_name = found_item_description.partition('\n')[0]
@@ -202,7 +206,7 @@ class TownManager:
             pyag.press("i")
 
 
-class Act3(TownManager):
+class Act5(TownManager):
     def manage_merc(self):
         if CONFIG["USE_MERC"]:
             log.debug("Manage merc start.")
@@ -234,9 +238,12 @@ class Act3(TownManager):
                               special_shift=(70, 200))
 
             self.pysikuli.click("images/trade.png")
-            sleep(0.5)
+            sleep(1)
             pyag.press(CONFIG["POTION_BELT"])
-            while Region(*CONFIG["POTIONS_HEALTH_REGION"]).exists("images/empty_potion.png", 0.3):
+            sleep(0.2)
+            log.info("1")
+            while Region(*CONFIG["POTIONS_HEALTH_REGION"]).exists("images/empty_potion.png", 1):
+                log.info("2")
                 healing_potion_loc = Region(*CONFIG["TRADER_REGION"]).match_color([[0, 0, 168], [64, 62, 238]],
                                                                                   method="nonzero")
                 self.pysikuli.click(healing_potion_loc, button="right")
@@ -245,6 +252,7 @@ class Act3(TownManager):
                 # global life_potions_bought
                 # life_potions_bought += 1
             while Region(*CONFIG["POTIONS_MANA_REGION"]).exists("images/empty_potion.png", 0.3):
+                log.info("3")
                 mana_potion_loc = Region(*CONFIG["TRADER_REGION"]).match_color([[34, 0, 0], [72, 3, 4]],
                                                                                method="nonzero")
                 self.pysikuli.click(mana_potion_loc, button="right")
@@ -252,6 +260,7 @@ class Act3(TownManager):
                 # TODO: This should be added to statistics
                 # global mana_potions_bought
                 # mana_potions_bought += 1
+            log.info("4")
             pyag.press("esc")
             # go_to_destination("images/malah.png",(20,40),critical=False)
             # go_to_destination("images/malah.png", (70, 20),critical=False)
@@ -277,7 +286,7 @@ def main():
     sleep(2)
     traveler = MapTraveler()
     character = Character(traveler)
-    town_manager = Act3(character)
+    town_manager = Act5(character)
     town_manager.execute()
 
 
@@ -286,10 +295,20 @@ def storeitems_test():
     sleep(2)
     traveler = MapTraveler()
     character = Character(traveler)
-    town_manager = Act3(character)
+    town_manager = Act5(character)
     town_manager.store_items()
 
 
+def gotostash_test():
+    log.info("Go to stash")
+    sleep(2)
+    traveler = MapTraveler()
+    character = Character(traveler)
+    town_manager = Act5(character)
+    town_manager.goto_stash()
+
+
 if __name__ == '__main__':
-    main()
-    #storeitems_test()
+    #main()
+    storeitems_test()
+    #gotostash_test()

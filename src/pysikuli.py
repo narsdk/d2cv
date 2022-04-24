@@ -1,5 +1,5 @@
 from vlogging import VisualRecord
-from logger import log
+from logger import log, GameError
 import ctypes
 import cv2 as cv
 import pyautogui as pyag
@@ -58,10 +58,10 @@ class Region:
             # screen = PIL.ImageGrab.grab(bbox=(self.x, self.y, self.x + self.w, self.y + self.h))
             global D3D
             screen = D3D.screenshot(region=(self.x, self.y, self.x + self.w, self.y + self.h))
-        log.info("Screenshot taking took " + str(datetime.datetime.now() - update_time_start))
+        log.debug("Screenshot taking took " + str(datetime.datetime.now() - update_time_start))
         self.previous_screen = self.screen
         self.screen = cv.cvtColor(screen, cv.COLOR_RGB2BGR)
-        log.info("Changing to bgr took " + str(datetime.datetime.now() - update_time_start))
+        log.debug("Changing to bgr took " + str(datetime.datetime.now() - update_time_start))
 
     @staticmethod
     def compare_screens(img1, img2):
@@ -76,7 +76,7 @@ class Region:
         if self.screen is None or update:
             self.update_screen()
 
-        log.info("Matching image " + str(image))
+        log.debug("Matching image " + str(image))
 
         img = cv.imread(image, cv.IMREAD_UNCHANGED)
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
@@ -86,7 +86,9 @@ class Region:
         res = cv.matchTemplate(img, screenshot, cv.TM_CCOEFF_NORMED)
 
         min_val, max_val, min_loc, max_loc = cv.minMaxLoc(res)
-        log.info("Best match location: {} similarity: {}".format(max_loc, max_val))
+        log.debug("Best match location: {} similarity: {}".format(max_loc, max_val))
+        log.visual(VisualRecord("Screenshot debug", [screenshot], fmt="png"))
+        log.visual(VisualRecord("Img debug", [img], fmt="png"))
 
         if max_val > threshold:
             log.debug("Image matched")
@@ -107,7 +109,7 @@ class Region:
             img_final = cv.circle(img_rectangled, center_loc, radius=0, color=(0, 0, 255), thickness=4)
 
             log.visual(VisualRecord("Match", [img_final], fmt="png"))
-            log.info("Finish matching")
+            log.debug("Finish matching")
             return center_loc, res, screenshot
         else:
             log.debug("Image not matched.")
@@ -145,13 +147,13 @@ class Region:
         check_number = 1
         log.debug("Exists started.")
         while True:
-            log.info("Image " + str(image) + " matching nr " + str(check_number))
+            log.debug("Image " + str(image) + " matching nr " + str(check_number))
             match_time_start = datetime.datetime.now()
             match_result = self.match(image, threshold, update=update)
             match_time_stop = datetime.datetime.now()
             matchingtime = match_time_stop - match_time_start
             matchtime = matchingtime.microseconds / 1000000
-            log.info("Match took " + str(datetime.datetime.now() - match_time_start))
+            log.debug("Match took " + str(datetime.datetime.now() - match_time_start))
             if match_result is not None:
                 return 1
             else:
@@ -230,6 +232,7 @@ class Region:
         if method == "contours":
             masked_screen = self.get_colored_mask(colors, mask_filter)
             thresh = cv.threshold(masked_screen, 5, 255, cv.THRESH_BINARY)[1]
+            log.visual(VisualRecord("Color match", [thresh], fmt="png"))
             cnts = cv.findContours(thresh.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
             cnts = imutils.grab_contours(cnts)
 
@@ -261,7 +264,10 @@ class Region:
 
     def image_mask(self, image, inverted=False):
         log.debug("Image mask start.")
-        best_location, result, screenshot = self.match(image)
+        match_result = self.match(image)
+        if match_result is None:
+            raise GameError()
+        best_location, result, screenshot = match_result
         locations = np.where(result >= 0.7)
         locations = list(zip(*locations[::-1]))
 

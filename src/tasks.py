@@ -6,11 +6,12 @@ import pyautogui as pyag
 from vlogging import VisualRecord
 from character import Character
 from maptraveler import MapTraveler
+from pickit import Pickit
 
 
 class Task:
-    def __init__(self, character, looter, maptraveler):
-        self.looter = looter
+    def __init__(self, character, maptraveler):
+        self.pickit = Pickit
         self.character = character
         self.maptraveler = maptraveler
 
@@ -18,6 +19,7 @@ class Task:
         self.pre_actions()
         self.approach()
         self.kill()
+        self.pickit.collect()
         self.post_actions()
 
     @abstractmethod
@@ -58,6 +60,7 @@ class Task:
         sleep(0.3)
         pyag.press("w")
         sleep(0.3)
+
 
 class Pindelskin(Task):
     def pre_actions(self):

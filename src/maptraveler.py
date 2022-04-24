@@ -257,14 +257,14 @@ class MapTraveler(Region):
         log.debug("Starting get_diff_from_destination")
 
         char_location = self.get_char_location()
-
         if type(destination) == str:
-            destination_location, *rest = self.match(destination)
+            destination_location = self.match(destination)
+            if destination_location is not None:
+                destination_location = destination_location[0]
         else:
             destination_color1, destination_color2 = destination
             destination_location = self.match_color([destination_color1, destination_color2], map_filter,
                                                     method="nonzero",)
-
         if destination_location is None:
             log.warning("Failed to find destination.")
             return None
@@ -275,7 +275,6 @@ class MapTraveler(Region):
             shift_x, shift_y = shift
             destination_location_x = destination_location_x + shift_x
             destination_location_y = destination_location_y + shift_y
-
         diff_location_x = destination_location_x - char_location_x
         diff_location_y = destination_location_y - char_location_y
 

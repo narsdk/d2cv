@@ -1,3 +1,5 @@
+import threading
+
 from logger import log, GameError
 from pysikuli import Region
 from src.config import CONFIG
@@ -7,21 +9,24 @@ import cv2 as cv
 import imutils
 import random
 import pyautogui as pyag
+import keyboard
 from vlogging import VisualRecord
 
 
 class Potioner:
     def __init__(self):
         self.screen = Region()
+        self.running = True
 
     # Drink potions when needed, started in thread
-    def potioner(self, stop):
+    def start(self):
         log.info("Start potioner thread.")
         healing_delay = 7  # wait 5 seconds after heal to heal again - workaround to not use all potions too fast
         merc_healed_time = datetime.datetime.now()
         char_healed_time = datetime.datetime.now()
         while True:
-            if stop():
+            potioner_loop_start = datetime.datetime.now()
+            if not self.running:
                 log.info("Finishing potioner.")
                 break
 
@@ -31,7 +36,7 @@ class Potioner:
                 self.screen.click("images/continue.png")
                 raise GameError("Hero is dead.")
 
-            if not self.screen.exists("images/ingame.png", 1):
+            if not Region(1229, 1284, 104, 121).exists("images/ingame.png", 1):
                 log.warning("Cannot find ingame image. Waiting for it.")
                 continue
 
@@ -62,9 +67,10 @@ class Potioner:
             if mana_percent < CONFIG["MANA_PERCENT_TO_DRINK_POTION"]:
                 log.info("Drinking mana potion.")
                 self.drink_potion("mana")
+            log.info("Potioner loop took " + str(datetime.datetime.now() - potioner_loop_start))
 
     # Dring mana or health potion
-    def drink_potion(type):
+    def drink_potion(self, type):
         if type == "health":
             pyag.press(str(random.randint(1, 2)))
         elif type == "reju":
@@ -74,7 +80,7 @@ class Potioner:
 
     # POTIONER
     # Get mana or life amount
-    def get_resource(resource_type):
+    def get_resource(self, resource_type):
         if resource_type == "health":
             region = (500, 1205, 240, 230)
             color1a = (0, 50, 20)
@@ -87,6 +93,8 @@ class Potioner:
             color1b = (140, 255, 255)
             color2a = (100, 150, 0)
             color2b = (140, 255, 255)
+        else:
+            log.error("Unknown resource type.")
 
         resource_bar = Region(*region).get_screen()
         resource_bar_hsv = cv.cvtColor(resource_bar, cv.COLOR_BGR2HSV)
@@ -129,18 +137,21 @@ class Potioner:
         log.debug("Resource: " + str(resource_type) + " value is " + str(resource))
         return resource
 
+
     def get_merc_life(self):
-        merc_screen = Region(CONFIG["MERC_REGION"]).get_screen()
-        mask1 = cv.inRange(merc_screen, (0, 126, 0), (0, 126, 0))
-        mask2 = cv.inRange(merc_screen, (27, 126, 205), (27, 126, 205))
-        mask3 = cv.inRange(merc_screen, (23, 3, 239), (23, 3, 239))
+        merc_screen = Region(*CONFIG["MERC_REGION"]).get_screen()
+        green_mask = cv.inRange(merc_screen, (8, 100, 24), (8, 100, 24)) # cv.inRange(merc_screen, (0, 126, 0), (0, 126, 0))
+        yellow_mask = cv.inRange(merc_screen, (32, 132, 208), (32, 132, 208)) # cv.inRange(merc_screen, (27, 126, 205), (27, 126, 205))
+        red_mask = cv.inRange(merc_screen, (0, 44, 252), (0, 44, 252)) # cv.inRange(merc_screen, (23, 3, 239), (23, 3, 239))
 
         ## Merge the mask and crop the red regions
-        mask = cv.bitwise_or(mask1, mask2, mask3)
+        mask = cv.bitwise_or(green_mask, yellow_mask, red_mask)
         filtered_bar = cv.bitwise_and(merc_screen, merc_screen, mask=mask)
 
         # convert the image to grayscale
         gray_image = cv.cvtColor(filtered_bar, cv.COLOR_BGR2GRAY)
+
+        log.debug(VisualRecord("merc_screen / filtered_bar / gray_image", [merc_screen, filtered_bar, gray_image], fmt="png"))
 
         # find contours in thresholded image, then grab the largest one
         cnts = cv.findContours(gray_image.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -162,7 +173,28 @@ class Potioner:
 
 def main():
     log.info("Potioner test")
-    sleep(2)
+    running = False
+    potioner = Potioner()
+    while True:
+        if keyboard.is_pressed("ctrl+shift+c") and not running:
+            log.info("Starting potioner thread.")
+            sleep(1)
+            running = True
+            potioner_thread = threading.Thread(target=potioner.start)
+            potioner_thread.daemon = True
+            potioner_thread.start()
+            log.info("Potioner thread started.")
+            # 10 second test for performance purposes
+            # sleep(10)
+            # running = potioner.running = False
+            # potioner_thread.join()
+            # log.info("Potioner thread finished.")
+        elif keyboard.is_pressed("ctrl+shift+c") and running:
+            log.info("Finishing potioner thread.")
+            sleep(1)
+            running = potioner.running = False
+            potioner_thread.join()
+            log.info("Potioner thread finished.")
 
 
 if __name__ == '__main__':

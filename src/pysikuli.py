@@ -8,12 +8,15 @@ from math import floor
 from time import sleep
 import datetime
 import imutils
+import PIL.ImageGrab
+import d3dshot
 
 user32 = ctypes.windll.user32
 SCREENRES_X, SCREENRES_Y = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
 
-pyag.PAUSE = 0.03
-MATCH_INTERVAL = 0.01
+pyag.PAUSE = 0.02
+MATCH_INTERVAL = 0.001
+D3D = d3dshot.create(capture_output="numpy")
 
 
 class Region:
@@ -31,7 +34,7 @@ class Region:
         self.screen = None
         self.previous_screen = None
         self.last_match = None
-        self.update_screen()
+        #self.update_screen()
 
     # Return screenshot saved
     def get_screen(self):
@@ -44,13 +47,21 @@ class Region:
 
     # Collect screenshots of ROI
     def update_screen(self, png=None):
+        update_time_start = datetime.datetime.now()
         if png:
             # Load image from file
             screen = cv.imread(png, cv.IMREAD_UNCHANGED)
         else:
-            screen = pyag.screenshot(region=(self.x, self.y, self.w, self.h))
+            # Here are different methods of screenshot grabing, D3D is definitely fastest for numpy data structure
+            # pyag: 0.48s per test, PIL: 0.49s per test, D3D: 0.026 per test
+            # screen = pyag.screenshot(region=(self.x, self.y, self.w, self.h))
+            # screen = PIL.ImageGrab.grab(bbox=(self.x, self.y, self.x + self.w, self.y + self.h))
+            global D3D
+            screen = D3D.screenshot(region=(self.x, self.y, self.x + self.w, self.y + self.h))
+        log.info("Screenshot taking took " + str(datetime.datetime.now() - update_time_start))
         self.previous_screen = self.screen
-        self.screen = cv.cvtColor(np.array(screen), cv.COLOR_RGB2BGR)
+        self.screen = cv.cvtColor(screen, cv.COLOR_RGB2BGR)
+        log.info("Changing to bgr took " + str(datetime.datetime.now() - update_time_start))
 
     @staticmethod
     def compare_screens(img1, img2):
@@ -65,7 +76,7 @@ class Region:
         if self.screen is None or update:
             self.update_screen()
 
-        log.debug("Matching image " + str(image))
+        log.info("Matching image " + str(image))
 
         img = cv.imread(image, cv.IMREAD_UNCHANGED)
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
@@ -75,7 +86,7 @@ class Region:
         res = cv.matchTemplate(img, screenshot, cv.TM_CCOEFF_NORMED)
 
         min_val, max_val, min_loc, max_loc = cv.minMaxLoc(res)
-        log.debug("Best match location: {} similarity: {}".format(max_loc, max_val))
+        log.info("Best match location: {} similarity: {}".format(max_loc, max_val))
 
         if max_val > threshold:
             log.debug("Image matched")
@@ -96,7 +107,7 @@ class Region:
             img_final = cv.circle(img_rectangled, center_loc, radius=0, color=(0, 0, 255), thickness=4)
 
             log.visual(VisualRecord("Match", [img_final], fmt="png"))
-
+            log.info("Finish matching")
             return center_loc, res, screenshot
         else:
             log.debug("Image not matched.")
@@ -130,19 +141,20 @@ class Region:
         else:
             return 0
 
-    def exists(self, image, seconds=2, threshold=0.7):
+    def exists(self, image, seconds=2, threshold=0.7, update=True):
         check_number = 1
         log.debug("Exists started.")
         while True:
-            log.debug("Image " + str(image) + " matching nr " + str(check_number))
+            log.info("Image " + str(image) + " matching nr " + str(check_number))
             match_time_start = datetime.datetime.now()
-            if self.match(image, threshold) is not None:
+            match_result = self.match(image, threshold, update=update)
+            match_time_stop = datetime.datetime.now()
+            matchingtime = match_time_stop - match_time_start
+            matchtime = matchingtime.microseconds / 1000000
+            log.info("Match took " + str(datetime.datetime.now() - match_time_start))
+            if match_result is not None:
                 return 1
             else:
-                match_time_stop = datetime.datetime.now()
-                matchingtime = match_time_stop - match_time_start
-                matchtime = matchingtime.microseconds / 1000000
-                log.debug("Matching time: " + str(matchtime))
                 if MATCH_INTERVAL > matchtime:
                     sleep(MATCH_INTERVAL - matchtime)
                     seconds -= MATCH_INTERVAL

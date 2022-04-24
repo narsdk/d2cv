@@ -36,7 +36,7 @@ class Restorer:
                 self.screen.click((513, 1416))
                 sleep(2)
 
-                graj = Region(342, 899, 530, 396).get_color_location([255, 224, 116])
+                graj = Region(342, 899, 530, 396).match_color([255, 224, 116])
                 if graj != (None, None):
                     log.info("Clicking graj")
                     graj_x, graj_y = graj
@@ -55,13 +55,14 @@ class Restorer:
 
             log.info("Restoring game success.")
         else:
-            log.info("Play exists?")
+            log.info("Play exists")
 
 
 def main():
-    log.info("Potioner test")
+    log.info("Restorer test.")
     sleep(2)
-
+    restorer = Restorer()
+    restorer.game_restore()
 
 if __name__ == '__main__':
     main()

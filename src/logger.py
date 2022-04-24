@@ -3,6 +3,7 @@ import logging.handlers
 import os
 from vlogging import VisualRecord
 
+LOG_LEVEL = log.DEBUG
 
 class GameError(Exception):
     def __init__(self, *args):
@@ -72,13 +73,13 @@ html_log_format = '[%(asctime)s.%(msecs)03d] [%(levelname)s] %(module)s - %(func
 
 log.basicConfig(
     filename=log_name,
-    level=log.DEBUG,
+    level=LOG_LEVEL,
     format=html_log_format,
     datefmt='%H:%M:%S',
 )
 
 log_format = '[%(asctime)s.%(msecs)03d] [%(levelname)s] %(module)s - %(funcName)s: %(message)s'
 console_logging = log.StreamHandler()
-console_logging.setLevel(log.DEBUG)
+console_logging.setLevel(LOG_LEVEL)
 console_logging.setFormatter(log.Formatter(log_format))
 log.getLogger().addHandler(console_logging)

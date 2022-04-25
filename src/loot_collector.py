@@ -29,6 +29,7 @@ class LootCollector:
     def get_equipment_item():
         log.debug("get_equipment_item start")
         occupied_equipment = Region(*CONFIG["EQUIPMENT_REGION"]).image_mask("images/empty_equipment.png", inverted=True)
+        log.visual(VisualRecord("Occupied equipment", [occupied_equipment], fmt="png"))
         cnts = cv.findContours(occupied_equipment.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         if not cnts:
@@ -37,7 +38,7 @@ class LootCollector:
         c = max(cnts, key=cv.contourArea)
 
         item_x, item_y = tuple(c[c[:, :, 1].argmax()][0])
-        item = item_x + 1696, item_y + 731
+        item = item_x + CONFIG["EQUIPMENT_REGION"][0] + 30, item_y + CONFIG["EQUIPMENT_REGION"][1] - 30
         log.info("Found item on location: " + str(item))
         return item
 

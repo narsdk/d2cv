@@ -249,7 +249,7 @@ class Region:
             else:
                 color1, color2 = colors[0], colors[1]
             masked_screen = self.get_color_range_mask(color1, color2, mask_filter)
-            log.debug(VisualRecord("Masked screen", [masked_screen], fmt="png"))
+            log.visual(VisualRecord("Color match", [masked_screen], fmt="png"))
             nonzero_points = cv.findNonZero(masked_screen)
             if nonzero_points is None:
                 return None

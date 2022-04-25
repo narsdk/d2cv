@@ -119,6 +119,7 @@ class TownManager:
                                              "images/stash_inside.png", special_shift=(70, 200))
 
             # Switch to personal tab
+            log.info("Enter personal tab.")
             self.pysikuli.click(CONFIG["STASH_LOCATIONS"][0])
             sleep(0.1)
 
@@ -152,16 +153,19 @@ class TownManager:
                 pyag.press("enter")
                 sleep(0.1)
 
+            log.info("Start storing items.")
             items_storing_timeout = 0
             current_stash = 0
             previous_item_to_store = (None, None)
             while True:
+                log.info("1")
                 items_storing_timeout += 1
                 if items_storing_timeout >= 16:
                     log.error("Timeout when storing items.")
                     raise GameError("Timeout when storing items.")
 
                 item_to_store = self.loot_collector.get_equipment_item()
+                log.info("2")
                 if item_to_store == (None, None):
                     log.info("All items stored.")
                     pyag.press("esc")
@@ -176,6 +180,7 @@ class TownManager:
                         exit(0)
                     self.pysikuli.click(CONFIG["STASH_LOCATIONS"][current_stash])
                 else:
+                    log.info("Hovering item to store.")
                     self.pysikuli.hover(item_to_store)
                     sleep(0.2)
                     found_item_description, rarity = self.loot_collector.get_item_description()
@@ -204,6 +209,7 @@ class TownManager:
                     previous_item_to_store = item_to_store
         else:
             pyag.press("i")
+        log.info("Storing items finished.")
 
 
 class Act5(TownManager):
@@ -309,6 +315,6 @@ def gotostash_test():
 
 
 if __name__ == '__main__':
-    #main()
-    storeitems_test()
+    main()
+    #storeitems_test()
     #gotostash_test()

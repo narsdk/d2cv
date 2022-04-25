@@ -278,7 +278,7 @@ class MapTraveler(Region):
         diff_location_x = destination_location_x - char_location_x
         diff_location_y = destination_location_y - char_location_y
 
-        log.debug("Char location: {} Destination location: {} Diff location: {},{}".format(char_location,
+        log.info("Char location: {} Destination location: {} Diff location: {},{}".format(char_location,
                                                                                            destination_location,
                                                                                            diff_location_x,
                                                                                            diff_location_y))

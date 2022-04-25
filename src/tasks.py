@@ -16,11 +16,16 @@ class Task:
         self.maptraveler = maptraveler
 
     def execute(self):
+        self.reach_location()
         self.pre_actions()
         self.approach()
         self.kill()
         self.pickit.collect()
         self.post_actions()
+
+    @abstractmethod
+    def reach_location(self):
+        pass
 
     @abstractmethod
     def pre_actions(self):
@@ -63,11 +68,13 @@ class Task:
 
 
 class Pindelskin(Task):
+    def reach_location(self):
+        self.go_to_anya()
+
     def pre_actions(self):
         super().pre_actions()
 
     def approach(self):
-        self.go_to_anya()
         self.tele_to_pindle()
 
     def kill(self):
@@ -101,9 +108,9 @@ class Pindelskin(Task):
         log.info("Going to anya start")
         self.character.go_to_destination("images/anya.png", (100, 40))
         self.character.go_to_destination("images/anya.png", (20, 45), move_step=(400, 450))
-        sleep(0.3)
+        sleep(0.5)
         self.character.enter_destination(([0, 239, 239], [0, 243, 243]), "images/nihlak_portal.png",
-                                         "images/ingame.png", special_shift=(-60, 0))
+                                         "images/ingame.png", special_shift=(0, 0))
 
     # TODO: Teleporting should be done by unified character moving methods
     def tele_to_pindle(self):
@@ -125,23 +132,26 @@ class Pindelskin(Task):
                 log.error("Timeout when teleporting to pindle.")
                 raise GameError("Timeout when teleporting to pindle.")
 
-            diff_location_x, diff_location_y = self.maptraveler.get_diff_from_destination(([18, 160, 184],
-                                                                                           [45, 184, 185]))
-            if diff_location_x is None or diff_location_x > 3 or diff_location_y < -3:
+            diff_location = self.maptraveler.get_diff_from_destination(([18, 160, 184],[45, 184, 185]))
+            if diff_location is not None:
+                diff_location_x, diff_location_y = diff_location
+            if diff_location is None or diff_location_x > 3 or diff_location_y < -3:
                 log.debug("Teleporting to pindle number " + str(tele_timeout))
                 self.maptraveler.click(tele_click_location, button="right")
-                sleep(0.1)
+                sleep(0.3)
             else:
                 log.debug("Teleporting to pindle completed.")
                 return True
 
 
 class Mephisto(Task):
+    def reach_location(self):
+        self.goto_wp((3, 9))
+
     def pre_actions(self):
         super().pre_actions()
 
     def approach(self):
-        self.goto_wp((3, 9))
         self.find_meph_level()
         self.go_to_mephisto()
 
@@ -231,8 +241,8 @@ def main():
     sleep(2)
     traveler = MapTraveler()
     character = Character(traveler)
-    task = Mephisto(character, "looter", traveler)
-    task.execute()
+    task = Pindelskin(character, traveler)
+    task.tele_to_pindle()
 
 
 if __name__ == '__main__':

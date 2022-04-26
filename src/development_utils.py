@@ -34,7 +34,7 @@ def get_pixels(image):
 
 def main():
     log.info("Development utils test")
-    image = ""
+    image = "images/pindle_entrance_colors.png"
     get_pixels(image)
 
 

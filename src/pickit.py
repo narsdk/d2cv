@@ -13,7 +13,7 @@ class Pickit:
         self.screen = Region(*CONFIG["LOOT_REGION"])
 
     def collect(self):
-        log.debug("Collect loot start")
+        log.info("Collect loot start")
 
         collect_timeout = 0
         pyag.press("alt")

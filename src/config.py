@@ -2,11 +2,14 @@ from logger import log
 
 CONFIG = {
     # BASIC CONFIGURATION
-    "TELEPORT_KEY": "f2",
     "ATTACK_KEY": "f1",
-    "ATTACK_KEY2": "f6",
-    "ARMOR_KEY": "f5",
+    "TELEPORT_KEY": "f2",
+    "ATTACK_KEY2": "f3",
     "PORTAL_KEY": "f4",
+    "ARMOR_KEY": "f5",
+    "BATTLE_COMMAND": "f6",
+    "BATTLE_ORDER": "f7",
+
     "POTION_BELT": "k",
 
     "MANA_PERCENT_TO_DRINK_POTION": 40,

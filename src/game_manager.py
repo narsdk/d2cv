@@ -85,7 +85,7 @@ class GameManager:
                 sleep(2)
 
                 graj = Region(342, 899, 530, 396).match_color([255, 224, 116])
-                if graj != (None, None):
+                if graj is not None:
                     log.info("Clicking graj")
                     graj_x, graj_y = graj
                     graj = (graj_x - 100, graj_y)

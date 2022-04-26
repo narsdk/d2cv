@@ -14,8 +14,8 @@ import d3dshot
 user32 = ctypes.windll.user32
 SCREENRES_X, SCREENRES_Y = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
 
-pyag.PAUSE = 0.02
-MATCH_INTERVAL = 0.001
+pyag.PAUSE = 0.1
+MATCH_INTERVAL = 0.01
 D3D = d3dshot.create(capture_output="numpy")
 
 

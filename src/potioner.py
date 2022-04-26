@@ -26,6 +26,7 @@ class Potioner:
         char_healed_time = datetime.datetime.now()
         while True:
             potioner_loop_start = datetime.datetime.now()
+            log.info("Running value is " + str(self.running))
             if not self.running:
                 log.info("Finishing potioner.")
                 break
@@ -68,6 +69,7 @@ class Potioner:
                 log.info("Drinking mana potion.")
                 self.drink_potion("mana")
             log.info("Potioner loop took " + str(datetime.datetime.now() - potioner_loop_start))
+            sleep(0.3)
 
     # Dring mana or health potion
     def drink_potion(self, type):
@@ -140,7 +142,7 @@ class Potioner:
 
     def get_merc_life(self):
         merc_screen = Region(*CONFIG["MERC_REGION"]).get_screen()
-        green_mask = cv.inRange(merc_screen, (8, 100, 24), (8, 100, 24)) # cv.inRange(merc_screen, (0, 126, 0), (0, 126, 0))
+        green_mask = cv.inRange(merc_screen, (0, 100, 0), (8, 132, 24)) # cv.inRange(merc_screen, (0, 126, 0), (0, 126, 0))
         yellow_mask = cv.inRange(merc_screen, (32, 132, 208), (32, 132, 208)) # cv.inRange(merc_screen, (27, 126, 205), (27, 126, 205))
         red_mask = cv.inRange(merc_screen, (0, 44, 252), (0, 44, 252)) # cv.inRange(merc_screen, (23, 3, 239), (23, 3, 239))
 

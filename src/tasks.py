@@ -11,7 +11,7 @@ from pickit import Pickit
 
 class Task:
     def __init__(self, character, maptraveler):
-        self.pickit = Pickit
+        self.pickit = Pickit()
         self.character = character
         self.maptraveler = maptraveler
 
@@ -51,15 +51,15 @@ class Task:
         sleep(0.3)
         pyag.press("w")
         sleep(0.3)
-        pyag.press("f5")
+        pyag.press(CONFIG["ARMOR_KEY"])
         sleep(0.3)
         self.maptraveler.click(None, button="right")
         sleep(0.3)
-        pyag.press("f6")
+        pyag.press(CONFIG["BATTLE_COMMAND"])
         sleep(0.3)
         self.maptraveler.click(None, button="right")
         sleep(0.3)
-        pyag.press("f7")
+        pyag.press(CONFIG["BATTLE_ORDER"])
         sleep(0.3)
         self.maptraveler.click(None, button="right")
         sleep(0.3)
@@ -132,7 +132,7 @@ class Pindelskin(Task):
                 log.error("Timeout when teleporting to pindle.")
                 raise GameError("Timeout when teleporting to pindle.")
 
-            diff_location = self.maptraveler.get_diff_from_destination(([18, 160, 184],[45, 184, 185]))
+            diff_location = self.maptraveler.get_diff_from_destination(([7, 124, 185], [52, 187, 190]), map_filter=True) # (([18, 160, 184], [45, 184, 185]))
             if diff_location is not None:
                 diff_location_x, diff_location_y = diff_location
             if diff_location is None or diff_location_x > 3 or diff_location_y < -3:
@@ -242,7 +242,9 @@ def main():
     traveler = MapTraveler()
     character = Character(traveler)
     task = Pindelskin(character, traveler)
-    task.tele_to_pindle()
+    #task.tele_to_pindle()
+    #task.execute()
+    task.pickit.collect()
 
 
 if __name__ == '__main__':

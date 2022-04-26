@@ -35,7 +35,7 @@ class Character:
         log.debug("Teleport end")
 
     def go_to_destination(self, destination, shift=None, move_step=(250, 350), accepted_distance=20, steps_timeout=30,
-                          critical=True, map_filter=False, button="left", move_sleep=0.3):
+                          critical=True, map_filter=False, button="left", move_sleep=0.2):
         step = 0
         error_counter = 0
         log.info("Going to destination " + str(destination))

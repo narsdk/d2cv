@@ -35,7 +35,7 @@ class Character:
         log.debug("Teleport end")
 
     def go_to_destination(self, destination, shift=None, move_step=(250, 350), accepted_distance=20, steps_timeout=30,
-                          critical=True, map_filter=False, button="left", move_sleep=0.2):
+                          critical=True, map_filter=False, button="left", move_sleep=0.1):
         step = 0
         error_counter = 0
         log.info("Going to destination " + str(destination))
@@ -50,7 +50,7 @@ class Character:
                     log.warning("This is not critical.")
                     return False
             # Checking blockers
-            if Region(*CONFIG["MINIMAP_REGION"]).exists("images/waypoint.png", 0.01):
+            if Region(*CONFIG["WAYPOINT_REGION"]).exists("images/waypoint.png", 0.1):
                 log.warning("Waypoint image found. Closing it.")
                 pyag.press("esc")
             log.info("Waypoint checked.")

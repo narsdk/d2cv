@@ -10,8 +10,9 @@ from abc import abstractmethod
 
 
 class TownManager:
-    def __init__(self, character):
+    def __init__(self, character, stats):
         self.character = character
+        self.stats = stats
         self.pysikuli = Region()
         self.traveler = MapTraveler()
         self.loot_collector = LootCollector()
@@ -69,9 +70,7 @@ class TownManager:
             sleep(1)
             self.pysikuli.click((1301, 659))
             sleep(1)
-            # TODO: This should be added to statistics
-            # global corpses_collected
-            # corpses_collected += 1
+            self.stats.corpses_collected += 1
         else:
             log.debug("Corpse not found.")
 
@@ -225,9 +224,7 @@ class Act5(TownManager):
                 self.pysikuli.click("images/resurrect.png")
                 sleep(0.2)
                 pyag.press("esc")
-                # TODO: This should be added to statistics
-                # global merc_resurrected
-                # merc_resurrected += 1
+                self.stats.merc_resurrected += 1
                 self.character.go_to_destination("images/merc_trader.png", (50, 50))
                 if not self.pysikuli.exists("images/stash.png", 0.3):
                     self.character.go_to_destination("images/merc_trader.png", (80, 50))
@@ -254,18 +251,14 @@ class Act5(TownManager):
                                                                                   method="nonzero")
                 self.pysikuli.click(healing_potion_loc, button="right")
                 sleep(0.2)
-                # TODO: This should be added to statistics
-                # global life_potions_bought
-                # life_potions_bought += 1
+                self.stats.life_potions_bought += 1
             while Region(*CONFIG["POTIONS_MANA_REGION"]).exists("images/empty_potion.png", 0.3):
                 log.info("3")
                 mana_potion_loc = Region(*CONFIG["TRADER_REGION"]).match_color([[34, 0, 0], [72, 3, 4]],
                                                                                method="nonzero")
                 self.pysikuli.click(mana_potion_loc, button="right")
                 sleep(0.2)
-                # TODO: This should be added to statistics
-                # global mana_potions_bought
-                # mana_potions_bought += 1
+                self.stats.mana_potions_bought += 1
             log.info("4")
             pyag.press("esc")
             # go_to_destination("images/malah.png",(20,40),critical=False)

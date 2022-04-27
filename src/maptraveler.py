@@ -235,21 +235,22 @@ class MapTraveler(Region):
 
     # TODO: Do we need to check it? maybe its constans?
     def get_char_location(self):
-        char_location = None
-        fail_counter = 0
-        while char_location is None:
-            char_location = self.match_color([[95, 51, 12], [253, 136, 39]], method="nonzero")
-            if char_location is None:
-                # If character counter on minimap is under some text then color is different
-                char_location = self.match_color([[193, 104, 25], [253, 136, 33]], method="nonzero")
-                if char_location is None:
-                    log.warning("Failed to find character.")
-                    fail_counter += 1
-                    sleep(0.1)
-                    if fail_counter > 5:
-                        return 433, 248
-        log.debug("Character location is " + str(char_location))
-        return char_location
+        # char_location = None
+        # fail_counter = 0
+        # while char_location is None:
+        #     char_location = self.match_color([[95, 51, 12], [253, 136, 39]], method="nonzero")
+        #     if char_location is None:
+        #         # If character counter on minimap is under some text then color is different
+        #         char_location = self.match_color([[193, 104, 25], [253, 136, 33]], method="nonzero")
+        #         if char_location is None:
+        #             log.warning("Failed to find character.")
+        #             fail_counter += 1
+        #             sleep(0.1)
+        #             if fail_counter > 5:
+        #                 return 427, 297
+        # log.debug("Character location is " + str(char_location))
+        # return char_location
+        return 427, 297
 
     # return vector of distance of character from destination point on minimap
     # destination can be an image patch or colors range in touple

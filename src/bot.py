@@ -12,12 +12,13 @@ import traceback
 
 
 class Bot:
-    def __init__(self):
+    def __init__(self, stats):
+        self.stats = stats
         self.pysikuli = Region()
         self.game_manager = GameManager()
         self.traveler = MapTraveler()
         self.character = Character(self.traveler)
-        self.town_manager = Act5(self.character)
+        self.town_manager = Act5(self.character, self.stats)
         self.tasks_list = {"Pindelskin": Pindelskin(self.character, self.traveler),
                            "Mephisto": Mephisto(self.character, self.traveler)
                            }
@@ -38,8 +39,8 @@ class Bot:
             log.error(e, exc_info=True)
             log.error(traceback.print_exc())
             log.exception('Exception found.')
-            # issues_counter += 1
-            # issues_list.append(e)
+            self.stats.issues_counter += 1
+            self.stats.issues_list.append(e)
         finally:
             self.game_manager.exit_game()
 

@@ -20,6 +20,8 @@ CONFIG = {
     "MERC_LIFE_TO_DRINK_POTION": 70,
 
     "GAMES_MAX": 10000,
+    "GAME_MAX_TIME": 300,
+    "GAME_MIN_TIME": 95,
     "DIFFICULTY": "hell",
     "TASKS": ["Pindelskin"],
 
@@ -41,6 +43,7 @@ CONFIG = {
     "STASH_LOCATIONS": [(156,160), (332,162), (518,158), (700,161)],
     "TV_REGION": (1027, 603, 507, 187),
     "LOOT_REGION": (600, 150, 1700, 850),
+    "WAYPOINT_REGION": (297,46,251,86),
 
     # COLORS
     "GREEN_TEXT": [0, 255, 0],

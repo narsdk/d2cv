@@ -58,7 +58,7 @@ setattr(log, visual_name, visual_level)
 setattr(log.getLoggerClass(), visual_method_name, log_for_level)
 setattr(log, visual_method_name, log_to_root)
 
-LOG_LEVEL = log.INFO
+LOG_LEVEL = log.DEBUG
 
 # Set file logger
 log_name = 'log/d2cv-log.html'

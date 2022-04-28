@@ -402,10 +402,11 @@ def main():
     sleep(2)
     traveler = MapTraveler()
     traveler.update_screen()
-    match_res = traveler.match_color([[149, 41, 98], [235, 101, 223]], method="nonzero", mask_filter=True)
-    log.info("Matching some colors test: " + str(match_res))
-    char = traveler.get_char_location()
-    log.info("Finding character text: " + str(char))
+    #match_res = traveler.match_color([[149, 41, 98], [235, 101, 223]], method="nonzero", mask_filter=True)
+    #log.info("Matching some colors test: " + str(match_res))
+    #char = traveler.get_char_location()
+    #log.info("Finding character text: " + str(char))
+    traveler.get_entrance_location()
 
 
 if __name__ == '__main__':

@@ -16,6 +16,7 @@ class Pickit:
         log.info("Collect loot start")
 
         collect_timeout = 0
+        self.screen.hover((50, 50))
         pyag.press("alt")
         sleep(0.2)
         while True:
@@ -52,6 +53,7 @@ class Pickit:
                 charm = self.screen.match("images/charm.png", threshold=0.6)
                 if charm is None:
                     log.info("No more items found.")
+                    pyag.press("alt")
                     break
                 else:
                     item, _, _ = charm

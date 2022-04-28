@@ -72,7 +72,7 @@ class Region:
                                fmt="png"))
         return screens_diff
 
-    def match(self, image, threshold=0.7, update=True):
+    def match(self, image, threshold=0.7, update=True, debug=False):
         if self.screen is None or update:
             self.update_screen()
 
@@ -83,12 +83,19 @@ class Region:
 
         screenshot = self.screen.copy()
 
+        if debug:
+            log.info(VisualRecord("Screenshot debug", [screenshot], fmt="png"))
+            log.info(VisualRecord("Img debug", [img], fmt="png"))
+            log.info("Screenshot shape: " + str(screenshot.shape))
+            log.info("Img shape: " + str(img.shape))
+        else:
+            log.visual(VisualRecord("Screenshot debug", [screenshot], fmt="png"))
+            log.visual(VisualRecord("Img debug", [img], fmt="png"))
+
         res = cv.matchTemplate(img, screenshot, cv.TM_CCOEFF_NORMED)
 
         min_val, max_val, min_loc, max_loc = cv.minMaxLoc(res)
         log.debug("Best match location: {} similarity: {}".format(max_loc, max_val))
-        log.visual(VisualRecord("Screenshot debug", [screenshot], fmt="png"))
-        log.visual(VisualRecord("Img debug", [img], fmt="png"))
 
         if max_val > threshold:
             log.debug("Image matched")
@@ -143,13 +150,13 @@ class Region:
         else:
             return 0
 
-    def exists(self, image, seconds=2, threshold=0.7, update=True):
+    def exists(self, image, seconds=2, threshold=0.7, update=True, debug=False):
         check_number = 1
         log.debug("Exists started.")
         while True:
             log.debug("Image " + str(image) + " matching nr " + str(check_number))
             match_time_start = datetime.datetime.now()
-            match_result = self.match(image, threshold, update=update)
+            match_result = self.match(image, threshold, update=update, debug=debug)
             match_time_stop = datetime.datetime.now()
             matchingtime = match_time_stop - match_time_start
             matchtime = matchingtime.microseconds / 1000000
@@ -223,8 +230,8 @@ class Region:
         return gray_image
 
     # Find center location of rgb color on screen
-    def match_color(self, colors, mask_filter=False, method="contours"):
-        if self.screen is None:
+    def match_color(self, colors, mask_filter=False, method="contours", update=True):
+        if self.screen is None or update:
             self.update_screen()
 
         log.debug("Matching color {} with method {}".format(colors, method))

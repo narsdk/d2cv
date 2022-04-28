@@ -45,7 +45,7 @@ def main():
             stats.game_times.append(game_time)
             log.info("Game took: " + str(game_time))
             stats.update_stats_file()
-            sleep_time = CONFIG["GAME_MIN_TIME"] - game_time if game_time < CONFIG["GAME_MIN_TIME"] else 1
+            # sleep_time = CONFIG["GAME_MIN_TIME"] - game_time if game_time < CONFIG["GAME_MIN_TIME"] else 1
             log.info("Sleep before next game")
             sleep(sleep_time)
 

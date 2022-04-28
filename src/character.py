@@ -50,9 +50,12 @@ class Character:
                     log.warning("This is not critical.")
                     return False
             # Checking blockers
-            if Region(*CONFIG["WAYPOINT_REGION"]).exists("images/waypoint.png", 0.1):
-                log.warning("Waypoint image found. Closing it.")
-                pyag.press("esc")
+            try:
+                if Region(*CONFIG["WAYPOINT_REGION"]).exists("images/waypoint.png", 0.1, debug=True):
+                    log.warning("Waypoint image found. Closing it.")
+                    pyag.press("esc")
+            except:
+                log.warning("Waypoint issue found. Repeating.")
             log.info("Waypoint checked.")
 
             self.maptraveler.update_screen()
@@ -171,7 +174,7 @@ class Character:
             # Go to entrance possition
             entrance_x, entrance_y = entrance_location
             char_x, char_y = char_location
-            if abs(entrance_x - char_x) > 40 or abs(entrance_y - char_y) > 40:
+            if abs(entrance_x - char_x) > 30 or abs(entrance_y - char_y) > 30:
                 tele_location = self.maptraveler.get_tele_location(char_location, entrance_location)
                 self.maptraveler.click(tele_location, button='right')
                 sleep(0.7)
@@ -188,8 +191,7 @@ class Character:
                     else:
                         log.warning("Wrong entrance found.")
                         return False, self.maptraveler.get_entrance_image()
-
-                    if Region(2162, 109, 386, 39).exists("images/indurance3.png", 5, threshold=0.9):
+                    if Region(2162, 17, 383, 131).exists("images/indurance3.png", 5, threshold=0.9):
                         log.info("Destination entered correctly.")
                         return True, None
                     else:
@@ -209,5 +211,13 @@ def main():
                                 special_shift=(70, 200))
 
 
+def waypoint_test():
+    log.info("Waypoint test start.")
+    sleep(2)
+    if Region(*CONFIG["WAYPOINT_REGION"]).exists("images/waypoint.png", 0.1):
+        log.warning("Waypoint image found. Closing it.")
+        pyag.press("esc")
+
 if __name__ == '__main__':
-    main()
+    waypoint_test()
+    #main()

@@ -7,6 +7,7 @@ from vlogging import VisualRecord
 from character import Character
 from maptraveler import MapTraveler
 from pickit import Pickit
+from pysikuli import Region
 
 
 class Task:
@@ -146,7 +147,8 @@ class Pindelskin(Task):
 
 class Mephisto(Task):
     def reach_location(self):
-        self.goto_wp((3, 9))
+        #self.goto_wp((3, 9))
+        pass
 
     def pre_actions(self):
         super().pre_actions()
@@ -156,7 +158,26 @@ class Mephisto(Task):
         self.go_to_mephisto()
 
     def kill(self):
-        pass
+        self.maptraveler.hover(CONFIG["MEPH_KILL_LOCATION"])
+        while Region(*CONFIG["DEMON_REGION"]).exists("images/demon.png", 3, debug=True):
+            pyag.press(CONFIG["ATTACK_KEY"])
+            sleep(0.3)
+            self.maptraveler.click(CONFIG["MEPH_KILL_LOCATION"], button="right")
+            pyag.press(CONFIG["ATTACK_KEY2"])
+            for i in range(1, 12):
+                log.info("Attack nr " + str(i))
+                if i % 6 == 0:
+                    pyag.press(CONFIG["ATTACK_KEY"])
+                if i % 2 == 0:
+                    self.maptraveler.click(CONFIG["MEPH_KILL_LOCATION"], button="right")
+                elif i % 2 == 1:
+                    self.maptraveler.click(CONFIG["MEPH_KILL_LOCATION"], button="right")
+                if i % 6 == 0:
+                    pyag.press(CONFIG["ATTACK_KEY2"])
+        log.info("Mephisto killed. Moving for loot.")
+        pyag.press(CONFIG["TELEPORT_KEY"])
+        sleep(0.3)
+        self.maptraveler.click(CONFIG["MEPH_KILL_LOCATION"], button="right")
 
     def post_actions(self):
         pass
@@ -193,7 +214,7 @@ class Mephisto(Task):
             if len([last10 for idx in range(len(last50)) if last50[idx: idx + len(last50)] == last10]) > 3:
                 log.error("Character stuck. Trying some random teleports.")
 
-            if tele_number >= 1000:
+            if tele_number >= 300:
                 log.error("Timeout when teleporting.")
                 raise GameError("Timeout when teleporting.")
 
@@ -230,14 +251,27 @@ class Mephisto(Task):
                                          accepted_distance=7, move_sleep=0.7, move_step=(60, 100))
 
     def go_to_mephisto(self):
+        log.info("Go to mephisto start")
         for i in range(1, 9):
             self.character.teleport_to("tl", 800, sleep_time=0.3, offset=(0, 450))
         self.meph_bait()
+        self.maptraveler.hover(CONFIG["MEPH_KILL_LOCATION"])
+        baits_number = 0
+        while not Region(*CONFIG["DEMON_REGION"]).exists("images/demon.png", 5):
+            baits_number += 1
+            if baits_number > 2:
+                log.error("Timeout when trying to reach mephisto through river.")
+                raise GameError("Timeout when trying to reach mephisto through river.")
+            log.warning("Cannot find mephisto, repeating bait again.")
+            pyag.press(CONFIG["TELEPORT_KEY"])
+            sleep(0.3)
+            self.maptraveler.click(CONFIG["MEPH_KILL_LOCATION"], button="right")
+            sleep(0.3)
+            self.meph_bait()
 
 
 def main():
     log.info("Tasks test")
-    # Go to act 3 meph wp and start
     sleep(2)
     traveler = MapTraveler()
     character = Character(traveler)
@@ -247,5 +281,18 @@ def main():
     task.pickit.collect()
 
 
+def meph_test():
+    log.info("Tasks test")
+    # Go to act 3 meph wp and start
+    sleep(2)
+    traveler = MapTraveler()
+    character = Character(traveler)
+    task = Mephisto(character, traveler)
+    task.execute()
+    # task.go_to_mephisto()
+    # task.kill()
+
+
 if __name__ == '__main__':
-    main()
+    meph_test()
+    # main()

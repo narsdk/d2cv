@@ -33,12 +33,13 @@ class Potioner:
 
             if Region(1055, 728, 452, 87).exists("images/continue.png", 0.03):
                 log.error("You are dead!")
-                sleep(3)
+                sleep(1)
                 self.screen.click("images/continue.png")
                 raise GameError("Hero is dead.")
 
             if not Region(1229, 1284, 104, 121).exists("images/ingame.png", 1):
                 log.warning("Cannot find ingame image. Waiting for it.")
+                sleep(10)
                 continue
 
             current_time = datetime.datetime.now()

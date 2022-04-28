@@ -32,6 +32,13 @@ class TownManager:
         pass
 
     def goto_wp(self):
+        wp_timeout = 0
+        while not Region().exists("images/wp_act" + str(self.act) + ".png"):
+            sleep(0.5)
+            wp_timeout += 1
+            if wp_timeout >= 10:
+                log.error("Timeout reached when waiting for WP.")
+                raise GameError("Timeout reached when waiting for WP.")
         Region().click("images/wp_act" + str(self.act) + ".png")
 
     def execute(self):

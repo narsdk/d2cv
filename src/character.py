@@ -174,7 +174,7 @@ class Character:
             # Go to entrance possition
             entrance_x, entrance_y = entrance_location
             char_x, char_y = char_location
-            if abs(entrance_x - char_x) > 30 or abs(entrance_y - char_y) > 30:
+            if abs(entrance_x - char_x) > 40 or abs(entrance_y - char_y) > 30:
                 tele_location = self.maptraveler.get_tele_location(char_location, entrance_location)
                 self.maptraveler.click(tele_location, button='right')
                 sleep(0.7)

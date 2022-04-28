@@ -77,7 +77,7 @@ class TownManager:
             log.debug("Corpse not found.")
 
     def manage_potions(self):
-        log.debug("Start manage potions.")
+        log.info("Start manage potions.")
         pyag.press("i")
         manage_potions_timeout = 0
         while True:

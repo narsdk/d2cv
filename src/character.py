@@ -125,7 +125,7 @@ class Character:
                 checking_location = (center_x + (diff_location_x * 15) + shift_x + special_shift_x,
                                      center_y + (diff_location_y * 15) + shift_y + special_shift_y)
                 self.matcher.hover(checking_location)
-                sleep(0.1)
+                sleep(0.05)
                 if self.matcher.exists(hover_image, 0.05):
                     log.info("Found {} on location {}".format(hover_image, checking_location))
                     return True

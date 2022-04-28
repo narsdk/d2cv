@@ -18,7 +18,7 @@ class Pickit:
         collect_timeout = 0
         self.screen.hover((50, 50))
         pyag.press("alt")
-        sleep(0.2)
+        sleep(0.3)
         while True:
             collect_timeout += 1
             if collect_timeout >= 10:

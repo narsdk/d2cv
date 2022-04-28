@@ -7,6 +7,7 @@ from maptraveler import MapTraveler
 from character import Character
 from loot_collector import LootCollector
 from abc import abstractmethod
+from stats import Statistics
 
 
 class TownManager:
@@ -16,6 +17,7 @@ class TownManager:
         self.pysikuli = Region()
         self.traveler = MapTraveler()
         self.loot_collector = LootCollector()
+        self.act = None
 
     @abstractmethod
     def manage_merc(self):
@@ -29,9 +31,8 @@ class TownManager:
     def goto_stash(self):
         pass
 
-    @abstractmethod
     def goto_wp(self):
-        pass
+        Region().click("images/wp_act" + str(self.act) + ".png")
 
     def execute(self):
         self.pre_game_actions()
@@ -39,6 +40,7 @@ class TownManager:
         self.goto_stash()
         self.store_items()
         self.manage_merc()
+        self.goto_wp()
 
     def pre_game_actions(self):
         log.debug("Pre game actions.")
@@ -186,18 +188,14 @@ class TownManager:
                     log.info("Item description: " + str(found_item_description))
                     item_name = found_item_description.partition('\n')[0]
                     if rarity != "unknown" and self.loot_collector.item_classification(item_name, rarity):
-                        # TODO: This should be added to statistics
-                        # global found_items_list
-                        # found_items_list.append(item_name)
+                        self.stats.found_items_list.append(item_name)
                         log.info("Store item: " + str(item_name))
                         sleep(0.1)
                         with pyag.hold('ctrl'):
                             pyag.click()
                             sleep(0.1)
                     else:
-                        # TODO: This should be added to statistics
-                        # global ignored_items_list
-                        # ignored_items_list.append(item_name)
+                        self.stats.ignored_items_list.append(item_name)
                         log.info("Ignored item: " + str(item_name))
                         sleep(0.1)
                         pyag.click()
@@ -210,8 +208,43 @@ class TownManager:
             pyag.press("i")
         log.info("Storing items finished.")
 
+    def do_shopping(self):
+        log.info("Start shopping.")
+        self.pysikuli.click("images/trade.png")
+        sleep(1)
+        pyag.press(CONFIG["POTION_BELT"])
+        sleep(0.2)
+        while Region(*CONFIG["POTIONS_HEALTH_REGION"]).exists("images/empty_potion.png", 1):
+            healing_potion_loc = Region(*CONFIG["TRADER_REGION"]).match_color([[0, 0, 168], [64, 62, 238]],
+                                                                              method="nonzero")
+            self.pysikuli.click(healing_potion_loc, button="right")
+            sleep(0.2)
+            self.stats.life_potions_bought += 1
+        while Region(*CONFIG["POTIONS_MANA_REGION"]).exists("images/empty_potion.png", 0.3):
+            mana_potion_loc = Region(*CONFIG["TRADER_REGION"]).match_color([[34, 0, 0], [72, 3, 4]],
+                                                                           method="nonzero")
+            self.pysikuli.click(mana_potion_loc, button="right")
+            sleep(0.2)
+            self.stats.mana_potions_bought += 1
+        pyag.press("esc")
+
+    def recognize_town(self):
+        if Region().exists("images/act5.png", 0.5):
+            log.info("Recognized Act 5.")
+            return Act5(self.character, self.stats)
+        elif Region().exists("images/act3.png", 0.5):
+            log.info("Recognized Act 3.")
+            return Act3(self.character, self.stats)
+        else:
+            log.error("ERROR: Unknown town.")
+            raise GameError
+
 
 class Act5(TownManager):
+    def __init__(self, character, stats):
+        super().__init__(character, stats)
+        self.act = 5
+
     def manage_merc(self):
         if CONFIG["USE_MERC"]:
             log.debug("Manage merc start.")
@@ -231,7 +264,7 @@ class Act5(TownManager):
                 self.character.go_to_destination("images/stash.png", (-80, 35), accepted_distance=15)
 
     def goto_shop(self):
-        log.debug("Buy potions start.")
+        log.info("Going to Malah shop.")
         pyag.press(CONFIG["POTION_BELT"])
         if Region(*CONFIG["POTIONS_BAR_REGION2"]).exists("images/empty_potion.png", 0.2):
             log.info("Found some empty potion slots, going to Malah")
@@ -239,28 +272,8 @@ class Act5(TownManager):
             self.character.go_to_destination("images/malah.png", (10, 30))
             self.character.enter_destination("images/malah.png", "images/malah_destination.png", "images/trade.png",
                               special_shift=(70, 200))
+            self.do_shopping()
 
-            self.pysikuli.click("images/trade.png")
-            sleep(1)
-            pyag.press(CONFIG["POTION_BELT"])
-            sleep(0.2)
-            log.info("1")
-            while Region(*CONFIG["POTIONS_HEALTH_REGION"]).exists("images/empty_potion.png", 1):
-                log.info("2")
-                healing_potion_loc = Region(*CONFIG["TRADER_REGION"]).match_color([[0, 0, 168], [64, 62, 238]],
-                                                                                  method="nonzero")
-                self.pysikuli.click(healing_potion_loc, button="right")
-                sleep(0.2)
-                self.stats.life_potions_bought += 1
-            while Region(*CONFIG["POTIONS_MANA_REGION"]).exists("images/empty_potion.png", 0.3):
-                log.info("3")
-                mana_potion_loc = Region(*CONFIG["TRADER_REGION"]).match_color([[34, 0, 0], [72, 3, 4]],
-                                                                               method="nonzero")
-                self.pysikuli.click(mana_potion_loc, button="right")
-                sleep(0.2)
-                self.stats.mana_potions_bought += 1
-            log.info("4")
-            pyag.press("esc")
             # go_to_destination("images/malah.png",(20,40),critical=False)
             # go_to_destination("images/malah.png", (70, 20),critical=False)
             sleep(0.1)
@@ -280,12 +293,44 @@ class Act5(TownManager):
         self.character.go_to_destination("images/stash.png", (-45, 5))
 
 
+class Act3(TownManager):
+    def __init__(self, character, stats):
+        super().__init__(character, stats)
+        self.act = 3
+
+    def goto_shop(self):
+        log.info("Going to Ormus shop.")
+        self.character.go_to_destination("images/meshif.png", (80, 20))
+        self.character.go_to_destination("images/ormus.png", (-10, 10))
+        pyag.press(CONFIG["POTION_BELT"])
+        if Region(*CONFIG["POTIONS_BAR_REGION2"]).exists("images/empty_potion.png", 0.2):
+            log.info("Found some empty potion slots, going to Ormus")
+            pyag.press(CONFIG["POTION_BELT"])
+            self.character.enter_destination("images/ormus.png", "images/ormus_destination.png", "images/trade.png",
+                                             special_shift=(70, 200))
+            self.do_shopping()
+        else:
+            log.info("No empty potion slot find.")
+            pyag.press(CONFIG["POTION_BELT"])
+
+    def goto_stash(self):
+        self.character.go_to_destination("images/decard.png", (0, 30))
+        # if Region().exists("images/stasha3.png"):
+        #
+        # else:
+        #     log.error("Cannot enter stash")
+
+    def manage_merc(self):
+        pass
+
+
 def main():
     log.info("Town manager test")
     sleep(2)
     traveler = MapTraveler()
     character = Character(traveler)
-    town_manager = Act5(character)
+    stats = Statistics()
+    town_manager = TownManager(character, stats).recognize_town()
     town_manager.execute()
 
 
@@ -293,8 +338,9 @@ def storeitems_test():
     log.info("Town manager test")
     sleep(2)
     traveler = MapTraveler()
+    stats = Statistics()
     character = Character(traveler)
-    town_manager = Act5(character)
+    town_manager = Act5(character, stats)
     town_manager.store_items()
 
 
@@ -302,12 +348,13 @@ def gotostash_test():
     log.info("Go to stash")
     sleep(2)
     traveler = MapTraveler()
+    stats = Statistics()
     character = Character(traveler)
-    town_manager = Act5(character)
+    town_manager = Act5(character, stats)
     town_manager.goto_stash()
 
 
 if __name__ == '__main__':
-    main()
-    #storeitems_test()
+    #main()
+    storeitems_test()
     #gotostash_test()

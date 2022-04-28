@@ -6,7 +6,7 @@ import datetime
 from game_manager import GameManager
 from maptraveler import MapTraveler
 from character import Character
-from town_manager import Act5
+from town_manager import TownManager, Act5, Act3
 from tasks import Pindelskin, Mephisto
 import traceback
 
@@ -18,7 +18,6 @@ class Bot:
         self.game_manager = GameManager()
         self.traveler = MapTraveler()
         self.character = Character(self.traveler)
-        self.town_manager = Act5(self.character, self.stats)
         self.tasks_list = {"Pindelskin": Pindelskin(self.character, self.traveler),
                            "Mephisto": Mephisto(self.character, self.traveler)
                            }
@@ -27,7 +26,8 @@ class Bot:
         self.game_manager.start_game()
         self.game_manager.create_game(CONFIG["DIFFICULTY"])
         try:
-            self.town_manager.execute()
+            town_manager = TownManager(self.character, self.stats).recognize_town()
+            town_manager.execute()
             for task in CONFIG["TASKS"]:
                 self.tasks_list[task].execute()
             log.info("Game finished correctly.")

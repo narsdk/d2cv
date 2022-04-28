@@ -44,8 +44,23 @@ class Task:
     def post_actions(self):
         pass
 
-    def goto_wp(self, waypoint):
-        pass
+    def select_wp(self, waypoint):
+        log.info("Waiting for wp.")
+        wait_loop = 0
+        while not Region(*CONFIG["WAYPOINT_REGION"]).exists("images/waypoint.png", 1):
+            wait_loop += 1
+            if wait_loop >= 5:
+                log.error("Timeout when waiting for wp.")
+                raise GameError("Timeout when waiting for wp.")
+        log.info("Selecting wp " + str(waypoint))
+        act, wp = waypoint
+        Region().click((40 + (act * 130), 185))
+        sleep(0.5)
+        Region().click((180, 260 + (wp * 80)))
+        sleep(0.5)
+        if Region(*CONFIG["WAYPOINT_REGION"]).exists("images/waypoint.png", 0.1):
+            log.error("ERROR: Waypoint is still visible.")
+            raise GameError("ERROR: Waypoint is still visible.")
 
     def use_cta(self):
         log.info("Using CTA.")
@@ -147,8 +162,7 @@ class Pindelskin(Task):
 
 class Mephisto(Task):
     def reach_location(self):
-        #self.goto_wp((3, 9))
-        pass
+        self.select_wp((3, 9))
 
     def pre_actions(self):
         super().pre_actions()
@@ -288,7 +302,8 @@ def meph_test():
     traveler = MapTraveler()
     character = Character(traveler)
     task = Mephisto(character, traveler)
-    task.execute()
+    task.reach_location()
+    # task.execute()
     # task.go_to_mephisto()
     # task.kill()
 

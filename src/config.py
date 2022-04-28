@@ -23,7 +23,8 @@ CONFIG = {
     "GAME_MAX_TIME": 300,
     "GAME_MIN_TIME": 95,
     "DIFFICULTY": "hell",
-    "TASKS": ["Pindelskin"],
+    #"TASKS": ["Pindelskin"],
+    "TASKS": ["Mephisto"],
 
     # REGIONS
     "CENTER_LOCATION": (1280, 700),

@@ -43,7 +43,7 @@ class Pickit:
             # threshold the image, then perform a series of erosion + dilatation to remove any small regions of noise
             thresh = cv.threshold(gray_image, 5, 255, cv.THRESH_BINARY)[1]
 
-            log.visual(VisualRecord("Items", [gray_image, thresh], fmt="png"))
+            log.info(VisualRecord("Items", [self.screen.screen, gray_image, thresh], fmt="png"))
             # find contours in thresholded image, then grab the largest one
             cnts = cv.findContours(thresh.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
             cnts = imutils.grab_contours(cnts)

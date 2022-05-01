@@ -92,7 +92,11 @@ class Region:
             log.visual(VisualRecord("Screenshot debug", [screenshot], fmt="png"))
             log.visual(VisualRecord("Img debug", [img], fmt="png"))
 
-        res = cv.matchTemplate(img, screenshot, cv.TM_CCOEFF_NORMED)
+        try:
+            res = cv.matchTemplate(img, screenshot, cv.TM_CCOEFF_NORMED)
+        except:
+            self.update_screen()
+            res = cv.matchTemplate(img, screenshot, cv.TM_CCOEFF_NORMED)
 
         min_val, max_val, min_loc, max_loc = cv.minMaxLoc(res)
         log.debug("Best match location: {} similarity: {}".format(max_loc, max_val))
@@ -125,7 +129,7 @@ class Region:
     def hover(self, dest, threshold=0.7, update=True):
         if type(dest) == str:
             match_res = self.match(dest, threshold, update)
-            if match_res != 0:
+            if match_res is not None:
                 location = match_res[0]
             else:
                 location = 0
@@ -270,23 +274,27 @@ class Region:
         return color_location
 
     def image_mask(self, image, inverted=False):
-        log.debug("Image mask start.")
+        log.info("Image mask start.")
         match_result = self.match(image)
         if match_result is None:
-            raise GameError()
+            return None
         best_location, result, screenshot = match_result
         locations = np.where(result >= 0.7)
         locations = list(zip(*locations[::-1]))
-
+        log.info("Image mask 2.")
         img = cv.imread(image, cv.IMREAD_UNCHANGED)
         image_size_w, image_size_h, image_size_c = img.shape
         size = (image_size_w, image_size_h)
+
+        log.info("Image mask 3.")
 
         # Draw best location
         for location in locations:
             top_left = location
             bottom_right = (location[0] + size[1], location[1] + size[0])
             cv.rectangle(screenshot, top_left, bottom_right, color=(255, 255, 255), thickness=-1, )
+
+        log.info("Image mask 4.")
 
         src_gray = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)
         src_gray = cv.blur(src_gray, (5, 5))
@@ -295,7 +303,7 @@ class Region:
         final = cv.dilate(thresh, None, iterations=3)
         if inverted:
             final = cv.bitwise_not(final)
-
+        log.info("Image mask 5.")
         return final
 
 

@@ -9,6 +9,8 @@ from character import Character
 from town_manager import TownManager, Act5, Act3
 from tasks import Pindelskin, Mephisto
 import traceback
+from potioner import Potioner
+import threading
 
 
 class Bot:
@@ -21,14 +23,21 @@ class Bot:
         self.tasks_list = {"Pindelskin": Pindelskin(self.character, self.traveler),
                            "Mephisto": Mephisto(self.character, self.traveler)
                            }
+        self.potioner = Potioner()
 
     def execute(self):
         self.game_manager.start_game()
         self.game_manager.create_game(CONFIG["DIFFICULTY"])
+        potioner_process = None
         try:
-            town_manager = TownManager(self.character, self.stats).recognize_town()
+            # town_manager = TownManager(self.character, self.stats).recognize_town()
+            town_manager = Act5(self.character, self.stats)
             town_manager.execute()
+            potioner_process = threading.Thread(target=self.potioner.start)
+            potioner_process.daemon = True
+            potioner_process.start()
             for task in CONFIG["TASKS"]:
+                log.info("Starting potioner process.")
                 self.tasks_list[task].execute()
             log.info("Game finished correctly.")
         except Exception as e:
@@ -42,6 +51,10 @@ class Bot:
             self.stats.issues_counter += 1
             self.stats.issues_list.append(e)
         finally:
+            log.info("Finishing potioner thread.")
+            self.potioner.running = False
+            if potioner_process is not None:
+                potioner_process.join()
             self.game_manager.exit_game()
 
 

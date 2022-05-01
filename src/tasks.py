@@ -30,7 +30,8 @@ class Task:
 
     @abstractmethod
     def pre_actions(self):
-        self.use_cta()
+        # self.use_cta()
+        pass
 
     @abstractmethod
     def approach(self):
@@ -106,15 +107,15 @@ class Pindelskin(Task):
         sleep(0.3)
         self.maptraveler.click((1788, 438), button="right")
         pyag.press(CONFIG["ATTACK_KEY2"])
-        for i in range(1, 12):
-            log.info("Attack nr " + str(i))
-            if i % 6 == 0:
+        for i in range(1, 56):
+            log.debug("Attack nr " + str(i))
+            if i % 7 == 0:
                 pyag.press(CONFIG["ATTACK_KEY"])
-            if i % 2 == 0:
+            if i % 7 in [0, 1, 2, 3]:
                 self.maptraveler.click((1480, 543), button="right")
-            elif i % 2 == 1:
+            elif i % 7 in [4, 5, 6]:
                 self.maptraveler.click((1550, 613), button="right")
-            if i % 6 == 0:
+            if i % 7 == 0:
                 pyag.press(CONFIG["ATTACK_KEY2"])
 
     def post_actions(self):
@@ -292,7 +293,7 @@ def main():
     task = Pindelskin(character, traveler)
     #task.tele_to_pindle()
     #task.execute()
-    task.pickit.collect()
+    task.kill()
 
 
 def meph_test():
@@ -309,5 +310,5 @@ def meph_test():
 
 
 if __name__ == '__main__':
-    meph_test()
-    # main()
+    # meph_test()
+    main()

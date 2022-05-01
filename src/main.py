@@ -16,16 +16,17 @@ def main():
     log.info("main module test")
     stats = Statistics()
     while stats.runs_number < CONFIG["GAMES_MAX"]:
-        potioner = Potioner()
+        #potioner = Potioner()
         try:
             stats.runs_number += 1
             log.info("Start game number " + str(stats.runs_number))
             game_time_start = datetime.datetime.now()
 
-            log.info("Starting potioner process.")
-            potioner_process = threading.Thread(target=potioner.start)
-            potioner_process.daemon = True
-            potioner_process.start()
+            # log.info("Starting potioner process.")
+            # potioner_process = threading.Thread(target=potioner.start)
+            # potioner_process = multiprocessing.Process(target=potioner.start)
+            # potioner_process.daemon = True
+            # potioner_process.start()
             log.info("Potioner process started.")
 
             bot = Bot(stats)
@@ -40,10 +41,10 @@ def main():
             stats.issues_list.append(e)
             GameManager().game_restore()
         finally:
-            log.info("Finishing potioner thread.")
-            #potioner_process.kill()
-            potioner_process.running = False
-            potioner_process.join()
+            # log.info("Finishing potioner thread.")
+            #potioner_process.terminate()
+            # potioner_process.running = False
+            # potioner_process.join()
             game_time_stop = datetime.datetime.now()
             game_time = game_time_stop - game_time_start
             game_time = game_time.total_seconds()

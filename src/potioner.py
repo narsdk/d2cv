@@ -21,7 +21,7 @@ class Potioner:
     # Drink potions when needed, started in thread
     def start(self):
         log.info("Start potioner thread.")
-        healing_delay = 7  # wait 5 seconds after heal to heal again - workaround to not use all potions too fast
+        healing_delay = 10   # wait 5 seconds after heal to heal again - workaround to not use all potions too fast
         merc_healed_time = datetime.datetime.now()
         char_healed_time = datetime.datetime.now()
         while True:
@@ -68,7 +68,7 @@ class Potioner:
                 char_healed_time = datetime.datetime.now()
             if mana_percent < CONFIG["MANA_PERCENT_TO_DRINK_POTION"]:
                 log.info("Drinking mana potion.")
-                self.drink_potion("mana")
+                #self.drink_potion("mana")
             log.info("Potioner loop took " + str(datetime.datetime.now() - potioner_loop_start))
             sleep(0.3)
 

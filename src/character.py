@@ -38,6 +38,7 @@ class Character:
                           critical=True, map_filter=False, button="left", move_sleep=0.1):
         step = 0
         error_counter = 0
+        waypoints_found = 0
         log.info("Going to destination " + str(destination))
         while True:
             step += 1
@@ -51,9 +52,13 @@ class Character:
                     return False
             # Checking blockers
             try:
-                if Region(*CONFIG["WAYPOINT_REGION"]).exists("images/waypoint.png", 0.1, debug=True):
+                if Region(*CONFIG["WAYPOINT_REGION"]).exists("images/waypoint.png", 0.1, debug=False):
                     log.warning("Waypoint image found. Closing it.")
                     pyag.press("esc")
+                    waypoints_found += 1
+                    if waypoints_found % 5 == 4:
+                        Region().click((1251,1007))
+                        sleep(2)
             except:
                 log.warning("Waypoint issue found. Repeating.")
             log.info("Waypoint checked.")

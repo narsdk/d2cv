@@ -27,9 +27,12 @@ class LootCollector:
 
     @staticmethod
     def get_equipment_item():
-        log.debug("get_equipment_item start")
+        log.info("get_equipment_item start")
         occupied_equipment = Region(*CONFIG["EQUIPMENT_REGION"]).image_mask("images/empty_equipment.png", inverted=True)
-        log.visual(VisualRecord("Occupied equipment", [occupied_equipment], fmt="png"))
+        if occupied_equipment is None:
+            log.info("No equipment found - None.")
+            return None, None
+        log.info(VisualRecord("Occupied equipment", [occupied_equipment], fmt="png"))
         cnts = cv.findContours(occupied_equipment.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         if not cnts:

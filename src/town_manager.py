@@ -47,7 +47,7 @@ class TownManager:
         self.goto_stash()
         self.store_items()
         self.manage_merc()
-        self.goto_wp()
+        # self.goto_wp()
 
     def pre_game_actions(self):
         log.debug("Pre game actions.")
@@ -134,32 +134,34 @@ class TownManager:
             # Get gold from other stash bars if there are less than 100k in personal
             if Region(*CONFIG["EMPTY_GOLD_REGION"]).exists("images/emptygold.png", 0.1):
                 log.info("Not enough gold. Gathering from other stash bars.")
+                lack_gold = False
                 for bar_number in range(1, 3):
                     log.info("Switching stash bar to " + str(bar_number))
                     self.pysikuli.click(CONFIG["STASH_LOCATIONS"][bar_number])
                     sleep(0.1)
                     if not Region(*CONFIG["EMPTY_GOLD_REGION"]).exists("images/emptygold.png", 0.1):
                         log.info("Collecting gold from stash bar " + str(bar_number))
-                        Region(*CONFIG["GOLD_REGION"]).click("images/windraw.png")
+                        Region(*CONFIG["GOLD_REGION"]).click("images/withdraw.png")
                         sleep(0.1)
                         for i in range(1, 8):
                             pyag.press("backspace")
                             sleep(0.02)
-                        pyag.typewrite("400000")
+                        pyag.typewrite("200000")
                         pyag.press("enter")
                         log.info("Gold collected.")
                         break
                 else:
                     log.error("Lack of gold. Exiting.")
-                    exit(0)
-                log.info("Sending gold to personal bar.")
-                sleep(0.1)
-                self.pysikuli.click(CONFIG["STASH_LOCATIONS"][0])
-                sleep(0.1)
-                Region(*CONFIG["CHAR_GOLD_REGION"]).click("images/windraw.png")
-                sleep(0.1)
-                pyag.press("enter")
-                sleep(0.1)
+                    lack_gold = True
+                if not lack_gold:
+                    log.info("Sending gold to personal bar.")
+                    sleep(0.1)
+                    self.pysikuli.click(CONFIG["STASH_LOCATIONS"][0])
+                    sleep(0.1)
+                    Region(*CONFIG["CHAR_GOLD_REGION"]).click("images/withdraw.png")
+                    sleep(0.1)
+                    pyag.press("enter")
+                    sleep(0.1)
 
             log.info("Start storing items.")
             items_storing_timeout = 0
@@ -182,10 +184,10 @@ class TownManager:
                     log.info("Stash bar is full, switching to next bar.")
                     previous_item_to_store = (None, None)
                     current_stash += 1
-                    if current_stash > 3:
+                    if current_stash > 4:
                         log.error("Whole stash is full. Exiting")
                         sleep(6000)
-                        exit(0)
+                        break
                     self.pysikuli.click(CONFIG["STASH_LOCATIONS"][current_stash])
                 else:
                     log.info("Hovering item to store.")
@@ -194,7 +196,7 @@ class TownManager:
                     found_item_description, rarity = self.loot_collector.get_item_description()
                     log.info("Item description: " + str(found_item_description))
                     item_name = found_item_description.partition('\n')[0]
-                    if rarity != "unknown" and self.loot_collector.item_classification(item_name, rarity):
+                    if rarity != "unknown": # and self.loot_collector.item_classification(item_name, rarity):
                         self.stats.found_items_list.append(item_name)
                         log.info("Store item: " + str(item_name))
                         sleep(0.1)

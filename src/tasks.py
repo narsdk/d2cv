@@ -107,8 +107,9 @@ class Pindelskin(Task):
         sleep(0.3)
         self.maptraveler.click((1788, 438), button="right")
         pyag.press(CONFIG["ATTACK_KEY2"])
-        for i in range(1, 56):
+        for i in range(1, 42):
             log.debug("Attack nr " + str(i))
+            sleep(0.1)
             if i % 7 == 0:
                 pyag.press(CONFIG["ATTACK_KEY"])
             if i % 7 in [0, 1, 2, 3]:
@@ -116,6 +117,7 @@ class Pindelskin(Task):
             elif i % 7 in [4, 5, 6]:
                 self.maptraveler.click((1550, 613), button="right")
             if i % 7 == 0:
+                sleep(0.1)
                 pyag.press(CONFIG["ATTACK_KEY2"])
 
     def post_actions(self):

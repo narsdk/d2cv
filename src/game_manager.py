@@ -125,4 +125,4 @@ def restorer_test():
 
 
 if __name__ == '__main__':
-    main()
+    restorer_test()

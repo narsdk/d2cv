@@ -17,7 +17,7 @@ class LootCollector:
     def __init__(self):
         self.good_items = {}
         # Load items lists
-        for item_rarity in ["unique", "set", "rune", "magic"]:
+        for item_rarity in ["unique", "set", "rune", "magic", "normal"]:
             with open("items/" + item_rarity + ".txt") as file:
                 file_lines = [line.rstrip() for line in file]
                 self.good_items[item_rarity] = [re.sub(r"(\w)([A-Z])", r"\1 \2", line.split(" ")[2])

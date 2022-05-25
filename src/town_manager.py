@@ -191,12 +191,13 @@ class TownManager:
                     self.pysikuli.click(CONFIG["STASH_LOCATIONS"][current_stash])
                 else:
                     log.info("Hovering item to store.")
+
                     self.pysikuli.hover(item_to_store)
                     sleep(0.2)
                     found_item_description, rarity = self.loot_collector.get_item_description()
                     log.info("Item description: " + str(found_item_description))
                     item_name = found_item_description.partition('\n')[0]
-                    if rarity != "unknown": # and self.loot_collector.item_classification(item_name, rarity):
+                    if rarity != "unknown" and self.loot_collector.item_classification(item_name, rarity):
                         self.stats.found_items_list.append(item_name)
                         log.info("Store item: " + str(item_name))
                         sleep(0.1)

@@ -10,6 +10,7 @@ import datetime
 import imutils
 import PIL.ImageGrab
 import d3dshot
+from src.config import CONFIG
 
 user32 = ctypes.windll.user32
 SCREENRES_X, SCREENRES_Y = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
@@ -95,7 +96,10 @@ class Region:
         try:
             res = cv.matchTemplate(img, screenshot, cv.TM_CCOEFF_NORMED)
         except:
+            img = cv.imread(image, cv.IMREAD_UNCHANGED)
+            img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
             self.update_screen()
+            screenshot = self.screen.copy()
             res = cv.matchTemplate(img, screenshot, cv.TM_CCOEFF_NORMED)
 
         min_val, max_val, min_loc, max_loc = cv.minMaxLoc(res)
@@ -273,13 +277,13 @@ class Region:
         log.debug("Location found: " + str(color_location))
         return color_location
 
-    def image_mask(self, image, inverted=False):
+    def image_mask(self, image, inverted=False, mask_filter=True):
         log.info("Image mask start.")
-        match_result = self.match(image)
+        match_result = Region(*CONFIG["EQUIPMENT_REGION"]).match(image)
         if match_result is None:
             return None
         best_location, result, screenshot = match_result
-        locations = np.where(result >= 0.7)
+        locations = np.where(result >= 0.65)
         locations = list(zip(*locations[::-1]))
         log.info("Image mask 2.")
         img = cv.imread(image, cv.IMREAD_UNCHANGED)
@@ -301,8 +305,12 @@ class Region:
         thresh = cv.threshold(src_gray, 150, 255, cv.THRESH_BINARY)[1]
         thresh = cv.erode(thresh, None, iterations=3)
         final = cv.dilate(thresh, None, iterations=3)
+        if mask_filter:
+            kernel = np.ones((3, 3), np.uint8)
+            final = cv.morphologyEx(src_gray, cv.MORPH_OPEN, kernel)
         if inverted:
             final = cv.bitwise_not(final)
+        log.visual(VisualRecord("screenshot/src_gray/thresh/final", [screenshot, src_gray, thresh, final], fmt="png"))
         log.info("Image mask 5.")
         return final
 

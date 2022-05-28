@@ -68,7 +68,7 @@ class Potioner:
                 char_healed_time = datetime.datetime.now()
             if mana_percent < CONFIG["MANA_PERCENT_TO_DRINK_POTION"]:
                 log.info("Drinking mana potion.")
-                #self.drink_potion("mana")
+                self.drink_potion("mana")
             log.info("Potioner loop took " + str(datetime.datetime.now() - potioner_loop_start))
             sleep(0.3)
 
@@ -98,15 +98,16 @@ class Potioner:
             color2b = (140, 255, 255)
         else:
             log.error("Unknown resource type.")
+            raise GameError
 
         resource_bar = Region(*region).get_screen()
         resource_bar_hsv = cv.cvtColor(resource_bar, cv.COLOR_BGR2HSV)
 
-        ## Gen lower mask (0-5) and upper mask (175-180) of RED
+        # Gen lower mask (0-5) and upper mask (175-180) of RED
         mask1 = cv.inRange(resource_bar_hsv, color1a, color1b)
         mask2 = cv.inRange(resource_bar_hsv, color2a, color2b)
 
-        ## Merge the mask and crop the red regions
+        # Merge the mask and crop the red regions
         mask = cv.bitwise_or(mask1, mask2)
         filtered_bar = cv.bitwise_and(resource_bar, resource_bar, mask=mask)
 
@@ -119,8 +120,7 @@ class Potioner:
         thresh2 = cv.erode(thresh1, None, iterations=2)
         thresh = cv.dilate(thresh2, None, iterations=2)
 
-        # find contours in thresholded image, then grab the largest
-        # one
+        # find contours in thresholded image, then grab the largest one
         cnts = cv.findContours(thresh.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
 

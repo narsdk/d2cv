@@ -2,33 +2,19 @@ from logger import log
 import traceback
 from time import sleep
 from src.config import CONFIG
-import multiprocessing
-import threading
-from potioner import Potioner
 from game_manager import GameManager
 from bot import Bot
 import datetime
-import ctypes
 from stats import Statistics
 
 
 def main():
-    log.info("main module test")
     stats = Statistics()
     while stats.runs_number < CONFIG["GAMES_MAX"]:
-        #potioner = Potioner()
         try:
             stats.runs_number += 1
             log.info("Start game number " + str(stats.runs_number))
             game_time_start = datetime.datetime.now()
-
-            # log.info("Starting potioner process.")
-            # potioner_process = threading.Thread(target=potioner.start)
-            # potioner_process = multiprocessing.Process(target=potioner.start)
-            # potioner_process.daemon = True
-            # potioner_process.start()
-            log.info("Potioner process started.")
-
             bot = Bot(stats)
             bot.execute()
             stats.successful_runs += 1
@@ -41,19 +27,14 @@ def main():
             stats.issues_list.append(e)
             GameManager().game_restore()
         finally:
-            # log.info("Finishing potioner thread.")
-            #potioner_process.terminate()
-            # potioner_process.running = False
-            # potioner_process.join()
             game_time_stop = datetime.datetime.now()
             game_time = game_time_stop - game_time_start
             game_time = game_time.total_seconds()
             stats.game_times.append(game_time)
             log.info("Game took: " + str(game_time))
             stats.update_stats_file()
-            # sleep_time = CONFIG["GAME_MIN_TIME"] - game_time if game_time < CONFIG["GAME_MIN_TIME"] else 1
-            sleep_time = 0
-            log.info("Sleep before next game")
+            sleep_time = CONFIG["GAME_MIN_TIME"] - game_time if game_time < CONFIG["GAME_MIN_TIME"] else 1
+            log.info(f"Sleep {sleep_time} before next game")
             sleep(sleep_time)
 
 

@@ -1,4 +1,4 @@
-from logger import log, GameError
+from logger import log
 from pysikuli import Region
 import cv2 as cv
 import numpy as np
@@ -139,8 +139,15 @@ class MapTraveler(Region):
 
         longest_line, _ = self.get_longest_line(map_canny)
         log.debug("Character location: {} Line parameters: {}. Differences: [{} {} {} {}]".format(char_position,
-                    longest_line, longest_line[0] - char_position[0], longest_line[1] - char_position[1],
-                    longest_line[2] - char_position[0], longest_line[3] - char_position[1]))
+                                                                                                  longest_line,
+                                                                                                  longest_line[0] -
+                                                                                                  char_position[0],
+                                                                                                  longest_line[1] -
+                                                                                                  char_position[1],
+                                                                                                  longest_line[2] -
+                                                                                                  char_position[0],
+                                                                                                  longest_line[3] -
+                                                                                                  char_position[1]))
 
         line_x1, line_y1, line_x2, line_y2 = longest_line
         line_x1 = line_x1 - char_position[0]
@@ -233,7 +240,7 @@ class MapTraveler(Region):
 
         return tele_loc
 
-    # TODO: Do we need to check it? maybe its constans?
+    # In past function checked location of "blue cross" on minimap - a character. Its not needed as its constant.
     def get_char_location(self):
         # char_location = None
         # fail_counter = 0
@@ -265,7 +272,7 @@ class MapTraveler(Region):
         else:
             destination_color1, destination_color2 = destination
             destination_location = self.match_color([destination_color1, destination_color2], map_filter,
-                                                    method="nonzero",)
+                                                    method="nonzero", )
         if destination_location is None:
             log.warning("Failed to find destination.")
             return None
@@ -280,9 +287,9 @@ class MapTraveler(Region):
         diff_location_y = destination_location_y - char_location_y
 
         log.info("Char location: {} Destination location: {} Diff location: {},{}".format(char_location,
-                                                                                           destination_location,
-                                                                                           diff_location_x,
-                                                                                           diff_location_y))
+                                                                                          destination_location,
+                                                                                          diff_location_x,
+                                                                                          diff_location_y))
 
         return diff_location_x, diff_location_y
 
@@ -402,10 +409,10 @@ def main():
     sleep(2)
     traveler = MapTraveler()
     traveler.update_screen()
-    #match_res = traveler.match_color([[149, 41, 98], [235, 101, 223]], method="nonzero", mask_filter=True)
-    #log.info("Matching some colors test: " + str(match_res))
-    #char = traveler.get_char_location()
-    #log.info("Finding character text: " + str(char))
+    # match_res = traveler.match_color([[149, 41, 98], [235, 101, 223]], method="nonzero", mask_filter=True)
+    # log.info("Matching some colors test: " + str(match_res))
+    # char = traveler.get_char_location()
+    # log.info("Finding character text: " + str(char))
     traveler.get_entrance_location()
 
 

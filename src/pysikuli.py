@@ -35,7 +35,6 @@ class Region:
         self.screen = None
         self.previous_screen = None
         self.last_match = None
-        #self.update_screen()
 
     # Return screenshot saved
     def get_screen(self):

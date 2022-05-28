@@ -28,17 +28,6 @@ class Pickit:
             self.screen.update_screen()
             gray_image = self.screen.get_colored_mask([CONFIG["ORANGE_TEXT"], CONFIG["GREEN_TEXT2"],
                                                        CONFIG["GOLD_TEXT"]], mask_filter=True)
-            # mask1 = cv.inRange(loot_region, rune_color, rune_color)
-            # mask2 = cv.inRange(loot_region, set_color, set_color)
-            # mask3 = cv.inRange(loot_region, unique_color, unique_color)
-            #
-            # # Merge the mask and crop the red regions
-            # mask = cv.bitwise_or(mask1, mask2)
-            # mask = cv.bitwise_or(mask, mask3)
-            # filtered_bar = cv.bitwise_and(loot_region, loot_region, mask=mask)
-            #
-            # # convert the image to grayscale
-            # gray_image = cv.cvtColor(filtered_bar, cv.COLOR_BGR2GRAY)
 
             # threshold the image, then perform a series of erosion + dilatation to remove any small regions of noise
             thresh = cv.threshold(gray_image, 5, 255, cv.THRESH_BINARY)[1]

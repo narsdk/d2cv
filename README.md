@@ -5,7 +5,11 @@ check [Botty](https://github.com/aeon0/botty). In short - bot create new games i
 village and travel to some locations with monsters. Kills that monsters, check if some interesting items were dropped 
 and if yes then collect them. To run bot check configuration section and run src/main.py.
 
-https://github.com/narsdk/d2cv/blob/master/assets/d2cv-pindlerun.mp4
+Here example of single run with buying potions, storing items and ressurecting mercenary - including behaviour for some 
+clicking failes due to NPC movement:
+
+https://user-images.githubusercontent.com/61120673/170844156-fee9b8e0-7132-4045-aab8-6e18090005fd.mp4
+
 
 ## Flow & Features
 

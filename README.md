@@ -81,19 +81,33 @@ shift parameters means that our destination is (x,y) pix shifted from found dest
 
 ![minimap1](https://user-images.githubusercontent.com/61120673/170951556-ff916fe4-f46b-48d6-95d9-08d597a4194c.png)
 
-We travel here as our real destination is portal near the Anya teleport. We want to enter it now:
+Our real destination is portal near the Anya. We want to enter it now:
 
 
 ```
 Character.enter_destination(([0, 239, 239], [0, 243, 243]), "images/nihlak_portal.png", "images/ingame.png")
+```
 
 where:
 ([0, 239, 239], [0, 243, 243]) - HSV range of searched yellow color (cross on map displaying portal location)
-"images/nihlak_portal.png" - after hover portal this image should appear
-"images/ingame.png" - 
+"images/nihlak_portal.png" - after hover portal by mouse cursor this image should appear - ![image](https://user-images.githubusercontent.com/61120673/171049986-6e93045b-5cdb-42d6-b13e-7cd4a361f998.png)
+. When it appear then we click left mouse button.
+"images/ingame.png" - check if character moved to other location successfully.
 
 
 ### Using potions
+
+Instance of class [Potioner](src/potioner.py) is started as a separate thread and checking for an amount of life and mana resources of hero and mercenary. It takes region of resource bar, filter it by resource color and check most extreme points of counturs - in case of hero life it will be a most extreme top value, in case of mercenary life it will be a most extreme right. They are represented by grey dots on last processed images:
+
+![image](https://user-images.githubusercontent.com/61120673/171055719-c7d9c153-e1f5-4382-b775-7691b2a9d852.png)
+
+here calculated amount of life is 30%
+
+![image](https://user-images.githubusercontent.com/61120673/171055770-bbd6da80-0c17-4e93-a3e3-e80e516eb5d7.png)
+
+here calculated amount of mercenary life is 100%
+
+
 
 ### Collecting items
 

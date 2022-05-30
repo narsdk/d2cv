@@ -65,9 +65,32 @@ If similarity of some is higher than our threshold we have a match with some det
 
 ### Moving on map
 
-[MapTraveler](src/MapTraveler.py) class is responsible for our hero moving from location to location. Steps are described in classes [TownManager](src/town_manager.py) and [Task](src/tasks.py) (both are a Strategy design patterns and represents towns from different game acts and different opponents to reach and kill). We use some reference points from minimap:
+[MapTraveler](src/maptraveler.py) class is responsible for our hero ([Character class](src/character.py)) moving from location to location. Steps are described in classes [TownManager](src/town_manager.py) and [Task](src/tasks.py) (both are a Strategy design patterns and represents towns from different game acts and different opponents to reach and kill). In example we want to move to Anya NPC. We use some reference points from minimap:
+
+MINIMAP                                                 // REFERENCE IMAGE //                             IMAGE FOUND ON MINIMAP
+
+<img src=https://user-images.githubusercontent.com/61120673/170946032-c65dffc0-7d85-47e1-a5e2-21064f1619fe.png width="45%" height="45%"><img src=https://user-images.githubusercontent.com/61120673/170946194-123c62b2-2eb9-48e4-b33b-3e6c7e82c572.png width="10%" height="10%"><img src=https://user-images.githubusercontent.com/61120673/170946234-b898afc6-8f42-4c9b-b463-87ade2b458af.png width="45%" height="45%">
+
+On our way there are some obstacles (building) so we uses two moves:
+
+```
+Character.go_to_destination("images/anya.png", shift=(100, 40))
+Character.go_to_destination("images/anya.png", shift=(20, 45), move_step=(400, 450))
+```
+shift parameters means that our destination is (x,y) pix shifted from found destination image. So that two steps will be something like:
+
+![minimap1](https://user-images.githubusercontent.com/61120673/170951556-ff916fe4-f46b-48d6-95d9-08d597a4194c.png)
+
+We travel here as our real destination is portal near the Anya teleport. We want to enter it now:
 
 
+```
+Character.enter_destination(([0, 239, 239], [0, 243, 243]), "images/nihlak_portal.png", "images/ingame.png")
+
+where:
+([0, 239, 239], [0, 243, 243]) - HSV range of searched yellow color (cross on map displaying portal location)
+"images/nihlak_portal.png" - after hover portal this image should appear
+"images/ingame.png" - 
 
 
 ### Using potions

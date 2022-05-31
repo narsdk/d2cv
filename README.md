@@ -1,5 +1,5 @@
 # <img src="assets/logo.png">
-Diablo 2 Computer Vision bot based on OpenCV. Project created for educational purposes, is not maintained anymore and 
+Diablo 2 Ressurected Computer Vision bot based on OpenCV. Project created for educational purposes, is not maintained anymore and 
 as well wasn't created to be supported on machines other than owned by creator, if you are looking for similar project 
 check [Botty](https://github.com/aeon0/botty). In short - bot create new games in Diablo 2 game - do some actions in 
 village and travel to some locations with monsters. Kills that monsters, check if some interesting items were dropped 
@@ -11,7 +11,7 @@ clicking failes due to NPC movement:
 https://user-images.githubusercontent.com/61120673/170844156-fee9b8e0-7132-4045-aab8-6e18090005fd.mp4
 
 
-## Flow & Features
+# Flow & Features
 
 - Games management - create new games, restart game during failes (like game crashes which are quite often),
 - Move through city maps basing on minimap locations and targets,
@@ -30,9 +30,9 @@ https://user-images.githubusercontent.com/61120673/170844156-fee9b8e0-7132-4045-
   all issues etc,
 - Logging - visual logger in html format - includes images during transformation what helps debug OpenCV issues. 
 
-## Configuration
+# Configuration
 
-### Game Configuration Notes
+## Game Configuration Notes
 
 Large Font Mode: Enabled
 
@@ -42,9 +42,9 @@ Minimap: on the left side
 
 Language: English
 
-## Some features explained
+# Some features explained
 
-### Clicking on images
+## Clicking on images
 To recognize what is happening on the screen and do some input actions like clicking I implemented [src/pysikuli.py with class Region](src/pysikuli.py). Naming of class, their functions and behaviours I did very similar to [SikuliX](http://sikulix.com/) which I used a lot in the past. So there is Region class which represents part of the screen (x,y, width, height and screenshot image). Most common flow is: 
 1. Do screenshot of a part of the screen. My research confirmed that fastest library for that on Windows is [d3dshot](https://pypi.org/project/d3dshot/), in my case even 20 times faster than PIL.ImageGrab or screenshot function from PyAutoGUI.
 
@@ -63,7 +63,7 @@ If similarity of some is higher than our threshold we have a match with some det
 
 3. It clicks on center location of found object.
 
-### Moving on map
+## Moving on map
 
 [MapTraveler](src/maptraveler.py) class is responsible for our hero ([Character class](src/character.py)) moving from location to location. Steps are described in classes [TownManager](src/town_manager.py) and [Task](src/tasks.py) (both are a Strategy design patterns and represents towns from different game acts and different opponents to reach and kill). In example we want to move to Anya NPC. We use some reference points from minimap:
 
@@ -95,7 +95,7 @@ where:
 "images/ingame.png" - check if character moved to other location successfully.
 
 
-### Using potions
+## Using potions
 
 Instance of class [Potioner](src/potioner.py) is started as a separate thread and checking for an amount of life and mana resources of hero and mercenary. It takes region of resource bar, filter it by resource color and check most extreme points of counturs - in case of hero life it will be a most extreme top value, in case of mercenary life it will be a most extreme right. They are represented by grey dots on last processed images:
 
@@ -107,8 +107,57 @@ here calculated amount of life is 30%
 
 here calculated amount of mercenary life is 100%
 
+## Collecting items
+
+After killing opponents bot checks if there are some items to loot. In current implementation I used easy and not best solution - we are looking for a texts of some colors to collect items of unique/set quality (gold/green) or runes (orange). 
 
 
-### Collecting items
+<img src=https://user-images.githubusercontent.com/61120673/171117662-d41c5eee-9b6e-40b8-8f76-1ca232a809e0.png width="50%" height="50%"><img src=https://user-images.githubusercontent.com/61120673/171117695-5651035d-b88c-4d50-a8a0-cda76fe035fa.png width="50%" height="50%">
 
-### Searching for an entrance to next location
+
+It could be done much better using OCR like Tesseract. I use Tesseract when decide if item should be stored in stash. First we need to localize items to check in character equipment, I'm doing it by selecting all places which are not empty:
+
+<img src=https://user-images.githubusercontent.com/61120673/171120400-a9d76a26-7593-49c9-a206-24582b83e1eb.png width="35%" height="35%">  <img src=https://user-images.githubusercontent.com/61120673/171120465-ab9c14cf-786b-4a75-86b0-aee61457db61.png width="35%" height="35%">
+
+Prepare item description image to be easy to analize by OCR. First we have to get item description region, then we have to gather text contours:
+
+<img src=https://user-images.githubusercontent.com/61120673/171121531-f58f28a6-08d1-4bc5-b230-82e7a7bf1834.png width="25%" height="25%"><img src=https://user-images.githubusercontent.com/61120673/171121937-7b420023-1177-4ba7-a58f-51f3e86055ec.png width="25%" height="25%"><img src=https://user-images.githubusercontent.com/61120673/171122156-8c595dd7-afc1-4dc9-9df4-b9481995b5b2.png width="25%" height="25%"><img src=https://user-images.githubusercontent.com/61120673/171122193-2781cc5d-3d82-4e99-bd61-29ace79bbd2a.png width="25%" height="25%">
+
+We put characters contours to OCR and get "Um RUNE", item color is orange so we know that its type is "rune". Now we have to check if that item should be stored - by checking if its on [list of runes to store described in configuration files](items). I use items lists from old Diablo 2 bot called Etal Bot.
+
+
+## Searching for an entrance to next location
+
+Traveling in Diablo 2 is teleporting from one waypoint and looking for an entrance to next location. In most areas entrance to next location is near the external wall so teleporting through wall is the best strategy. I used algorithm similar to this used by autonomic vacuum cleaners:
+```
+- Check if there is a space in front of you and a wall on your left side.
+- If there is a wall on left and space in front then go forward
+- if there are no wall on left and there is a space then turn left
+- if there is a wall on left and wall on the front then turn right
+- if character didnt changes its location since last move then its blocked - repeat and if still is blocked then turn right
+- do all until you will find entrance colors on minimap
+```
+There are few other conditions in algorithm to make it working correclty, this are main.
+
+https://user-images.githubusercontent.com/61120673/171133759-1d8a4ac7-6df0-49f2-aa96-d8cea61338e8.mp4
+
+But how does bot know if conditions are meet? By analizing contours from minimap. First we need to make minimap more readable:
+
+<img src=https://user-images.githubusercontent.com/61120673/171134987-5c34f8b8-1bfa-4753-8163-69f5c5ad189b.png width="33%" height="33%"><img src=https://user-images.githubusercontent.com/61120673/171135033-8e3f36da-e587-4979-b6ea-922806185c18.png width="33%" height="33%"><img src=https://user-images.githubusercontent.com/61120673/171135125-72c89596-6a8f-4017-a66a-0a53aeca52e9.png width="33%" height="33%">
+
+We know where our character is located on minimap so we can just evaluate what is on his front/left sides:
+
+![image](https://user-images.githubusercontent.com/61120673/171137800-75c3bc14-3e76-4803-995a-47c3bdf79a2b.png)
+![image](https://user-images.githubusercontent.com/61120673/171137825-fadb1a0d-41c5-4952-893e-48351fbaf4a1.png)
+
+Result? Go forward!
+
+How does bot check if character is blocked? We compare new gathered minimap with old one.
+How does bot make sure that entrance is correct? If bot find entrance to not desired location then it saves shapes of walls near location and ignores them during teleportation.
+
+## Logging in OpenCV
+
+Debuging Computer Vision programs very often requires to check what is going on images - screenshot and during processing. Displaying images all the time during execution is not comfortable. With help here comes [visual-logging](https://github.com/dchaplinsky/visual-logging) which save logs in html format with images included. I really recomend a lot!
+
+
+
